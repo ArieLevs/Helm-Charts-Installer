@@ -3,8 +3,10 @@ Kubernetes Local Services
 
 Install various Kubernetes services on your local Kubernetes installation 
 
-- Kubernetes Dashboard
-- OpenFaaS
+- [Traefik](https://traefik.io/) (As Ingress Controller)
+- [Kubernetes Dashboard](https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/)
+- [OpenFaaS](https://www.openfaas.com/)
+- [Airflow](https://airflow.apache.org/)
 - More to come
 
 Perquisites

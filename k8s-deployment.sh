@@ -1,7 +1,28 @@
 #!/bin/sh
 
 function main() {
-    #cp ~/.kube/config ~/.kube/config.local
+
+    # Find Operating System
+    case "$(uname -s)" in
+        Linux*)     execute_linux_dependencies;;
+        Darwin*)    execute_mac_dependencies;;
+        *)          echo "Operating System not support, app terminated!" && exit 1;;
+    esac
+
+    # Check if config.local file exists
+    k8s_config="$HOME/.kube/config.local"
+    if [ -e "$k8s_config" ]
+    then
+        break
+    else
+        dialog --backtitle "Kubernetes Services Deployment" \
+        --title "Kubernetes Services Deployment" \
+        --msgbox "File ${k8s_config} was not found!\n\nMake sure to read the README file and execute 'cp $HOME/.kube/config $HOME/.kube/config.local'" 20 50
+
+        clear
+        exit 1
+    fi
+
     export KUBECONFIG=~/.kube/config.local
 
     dialog --backtitle "Kubernetes Services Deployment" \
@@ -97,12 +118,20 @@ function deploy_kubernetes_services() {
         --msgbox "Kubernetes Services Deployment Completed!\nVisit: ${urls_string}" 20 50
 
     clear
-    echo "Kubernetes Services Deployment Completed!\nVisit: ${urls_string}"
+    echo $(kubectl cluster-info)
+    echo "\nKubernetes Services Deployment Completed!\nVisit: ${urls_string}"
     exit 0
 }
 
 function deploy_traefik_ingress() {
     kubectl apply -f traefik/traefik-namespace.yml
+
+    # Wait until namespace created
+    until kubectl get namespaces|grep ingress-traefik
+    do
+        sleep 0.1
+    done
+
     kubectl apply -f traefik/traefik-confgmap.yml
     kubectl apply -f traefik/traefik-rbac.yaml
     kubectl apply -f traefik/traefik-ds.yaml
@@ -127,6 +156,13 @@ function get_utl_kubernetes_dashboard() {
 
 function deploy_airflow() {
     kubectl apply -f airflow/airflow-namespace.yml
+
+    # Wait until namespace created
+    until kubectl get namespaces|grep airflow
+    do
+        sleep 0.1
+    done
+
     kubectl apply -f airflow/airflow-ingress.yml
     kubectl apply -f airflow/airflow-deployment.yml
 
@@ -139,6 +175,19 @@ function get_utl_airflow() {
 
 function deploy_openfaas() {
     kubectl apply -f openfaas/namespace.yml
+
+    # Wait until namespace created
+    until kubectl get namespaces|grep openfaas
+    do
+        sleep 0.1
+    done
+
+    # Wait until namespace created
+    until kubectl get namespaces|grep openfaas-fn
+    do
+        sleep 0.1
+    done
+
     kubectl apply -f openfaas/
 
     return 0
@@ -148,9 +197,31 @@ function get_utl_openfaas() {
     echo "http://openfaas.localhost\nhttp://prometheus.openfaas.localhost"
 }
 
-function terminate_process() {
+function execute_linux_dependencies() {
+    case "$(awk -F= '/^NAME/{print $2}' /etc/os-release)" in
+        "Ubuntu"*)  sudo apt-get install -y dialog;;
+        "CentOS Linux"*)    sudo yum install -y dialog;;
+        *)          echo "Linux version not support, app terminated!" && exit 1;;
+    esac
+}
+
+function execute_mac_dependencies() {
+    # Check if dialog already installed
+    brew ls --versions dialog
+    if [ "$?" != "0" ]; then
+        brew install dialog
+    fi
+}
+
+function unexpected_process_termination() {
     dialog --title "Kubernetes Services Deployment" \
-        --infobox "Deployment canceled." 20 50
+        --infobox "Something went wrong, application had to be terminated" 20 50
+    clear
+    echo "Kubernetes Services Deployment Terminated for some reason (no logs for now sorry)"
+    exit 1
+}
+
+function terminate_process() {
     clear
     echo "Kubernetes Services Deployment Terminated"
     exit 1
