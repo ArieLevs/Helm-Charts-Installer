@@ -38,7 +38,8 @@ function deploy_kubernetes_services() {
 
     service_selections=(dialog --backtitle "Kubernetes Services Deployment" --separate-output --checklist "Select applications to install:" 20 50 0)
     options=("kubernetes_dashboard" "" on
-             "openfaas" "" off)
+             "openfaas" "" off
+             "airflow" "" off)
     selections+=$("${service_selections[@]}" "${options[@]}" 2>&1 > /dev/tty)
 
     # Return status of non-zero indicates cancel
@@ -122,6 +123,18 @@ function deploy_kubernetes_dashboard() {
 
 function get_utl_kubernetes_dashboard() {
     echo "http://kubernetes.localhost"
+}
+
+function deploy_airflow() {
+    kubectl apply -f airflow/airflow-namespace.yml
+    kubectl apply -f airflow/airflow-ingress.yml
+    kubectl apply -f airflow/airflow-deployment.yml
+
+    return 0
+}
+
+function get_utl_airflow() {
+    echo "http://airflow.localhost"
 }
 
 function deploy_openfaas() {
