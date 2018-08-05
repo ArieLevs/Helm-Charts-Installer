@@ -1,0 +1,88 @@
+functionNamespace: openfaas-fn
+
+async: true
+
+exposeServices: true
+serviceType: ClusterIP
+rbac: true
+securityContext: true
+basic_auth: false
+
+faasnetesd:
+  image: openfaas/faas-netes:0.6.0
+  readTimeout : "20s"
+  writeTimeout : "20s"
+  imagePullPolicy : "Always"    # Image pull policy for deployed functions
+  httpProbe: false              # Setting to true will use a lock file for readiness and liveness
+  readinessProbe:
+    initialDelaySeconds: 0
+    timeoutSeconds: 1
+    periodSeconds: 1
+  livenessProbe:
+    initialDelaySeconds: 3
+    timeoutSeconds: 1
+    periodSeconds: 10
+
+gateway:
+  image: openfaas/gateway:0.8.9
+  readTimeout : "20s"
+  writeTimeout : "20s"
+  upstreamTimeout : "15s"  # Must be smaller than read/write_timeout
+  replicas: 1
+  scaleFromZero: false
+  # change the port when creating multiple releases in the same baremetal cluster
+  nodePort: 31112
+
+queueWorker:
+  image: openfaas/queue-worker:0.4.8
+  ackWait : "30s"
+  replicas: 1
+
+# image pull policy for openfaas components, can change to `IfNotPresent` in offline env
+openfaasImagePullPolicy: "Always"
+
+# replaces faas-netes with openfaas-operator
+operator:
+  image: openfaas/openfaas-operator:0.8.4
+  create: false
+  # set this to false when creating multiple releases in the same cluster
+  # must be true for the first one only
+  createCRD: true
+
+# monitoring and auto-scaling components
+prometheus:
+  image: prom/prometheus:v2.3.1
+alertmanager:
+  image: prom/alertmanager:v0.15.0
+
+# async provider
+nats:
+  image: nats-streaming:0.6.0
+
+# ingress configuration
+ingress:
+  enabled: true
+  # Used to create Ingress record (should be used with exposeServices: false).
+  hosts:
+    - host: openfaas.localhost
+      serviceName: gateway
+      servicePort: 8080
+      path: /
+    - host: prometheus.openfaas.localhost
+      serviceName: prometheus
+      servicePort: 9090
+      path: /
+    - host: alertmanager.openfaas.localhost
+      serviceName: alertmanager
+      servicePort: 9093
+      path: /
+  annotations:
+    kubernetes.io/ingress.class: traefik
+  tls:
+    # Secrets must be manually created in the namespace.
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

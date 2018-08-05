@@ -1,5 +1,7 @@
 #!/bin/sh
 
+K8S_CONFIG="$HOME/.kube/config.local"
+
 function main() {
 
     # Find Operating System
@@ -10,24 +12,36 @@ function main() {
     esac
 
     # Check if config.local file exists
-    k8s_config="$HOME/.kube/config.local"
-    if [ -e "$k8s_config" ]
+    if [ -e "${K8S_CONFIG}" ]
     then
         break
     else
         dialog --backtitle "Kubernetes Services Deployment" \
         --title "Kubernetes Services Deployment" \
-        --msgbox "File ${k8s_config} was not found!\n\nMake sure to read the README file and execute 'cp $HOME/.kube/config $HOME/.kube/config.local'" 20 50
+        --msgbox "File ${K8S_CONFIG} was not found!\n\nMake sure to read the README file and execute 'cp $HOME/.kube/config ${K8S_CONFIG}'" 20 50
 
         clear
         exit 1
     fi
 
-    export KUBECONFIG=~/.kube/config.local
+    export KUBECONFIG=${K8S_CONFIG}
+
+    ### Install tiller on k8s cluster ###
+    kubectl get serviceaccount tiller --namespace kube-system
+    if [ "$?" != "0" ]; then
+        kubectl create serviceaccount tiller --namespace kube-system
+    fi
+
+    kubectl get clusterrolebinding tiller
+    if [ "$?" != "0" ]; then
+        kubectl create clusterrolebinding tiller \
+            --clusterrole cluster-admin \
+            --serviceaccount=kube-system:tiller
+    fi
 
     action_selections=(dialog --title "Kubernetes Services Deployment" --backtitle "Kubernetes Services Deployment" --radiolist "What would like to do?" 20 50 0)
     action_options=("Install" "" on
-             "Delete" "" off)
+                    "Delete" "" off)
     res_action_selections+=$("${action_selections[@]}" "${action_options[@]}" 2>&1 > /dev/tty)
 
     # Return status of non-zero indicates cancel
@@ -55,8 +69,8 @@ function delete_kubernetes_services() {
         terminate_process
     fi
 
-    # selections is now: { app1 app2 app3... ... traefik_ingress }
-    # Cast selections into an Array
+    # selections is now: { app1 app2 app3... }
+    # Cast selections into an Array delimiter is space
     deployments_array=(${res_delete_selections// / })
     num_of_deployments=${#deployments_array[@]}
 
@@ -253,7 +267,7 @@ function get_utl_airflow() {
 }
 
 function deploy_openfaas() {
-    kubectl apply -f openfaas/namespace.yml
+    kubectl apply -f https://raw.githubusercontent.com/openfaas/faas-netes/master/namespaces.yml
 
     # Wait until namespace created
     until kubectl get namespaces|grep openfaas
@@ -267,13 +281,14 @@ function deploy_openfaas() {
         sleep 0.5
     done
 
-    kubectl apply -f openfaas/
-
+    helm upgrade openfaas --install openfaas/openfaas \
+        --namespace openfaas \
+        -f openfaas/values.local.yaml
     return 0
 }
 
 function get_utl_openfaas() {
-    echo "http://openfaas.localhost\nhttp://prometheus.openfaas.localhost"
+    echo "http://openfaas.localhost\nhttp://prometheus.openfaas.localhost\nhttp://alertmanager.openfaas.localhost"
 }
 
 function execute_linux_dependencies() {
@@ -290,6 +305,11 @@ function execute_mac_dependencies() {
     if [ "$?" != "0" ]; then
         brew install dialog
     fi
+    # Check if kubernetes-helm already installed
+    brew install kubernetes-helm
+    if [ "$?" != "0" ]; then
+        brew install kubernetes-helm
+    fi
 }
 
 function unexpected_process_termination() {
@@ -304,11 +324,6 @@ function terminate_process() {
     clear
     echo "Kubernetes Services Deployment Terminated"
     exit 1
-}
-
-function test_internet_connection() {
-    wget -q --spider http://google.com
-    return $?
 }
 
 main "$@"

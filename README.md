@@ -9,8 +9,8 @@ Install various Kubernetes services on your local Kubernetes installation
 - [Airflow](https://airflow.apache.org/)
 - More to come
 
-Perquisites
------------
+Prerequisites
+-------------
 
 Install Docker **Edge** version,
 Follow instructions [here](https://store.docker.com/editions/community/docker-ce-desktop-mac) (MacOS), 
