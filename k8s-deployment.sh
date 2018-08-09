@@ -2,9 +2,16 @@
 
 K8S_CONFIG="$HOME/.kube/config.local"
 
+TRAEFIK_URL="http://traefik.localhost"
+KUBE_DASH_URL="https://kubernetes.localhost"
+AIRFLOW_URL="http://airflow.localhost"
+OPENFAAS_URL="http://openfaas.localhost"
+PROMETHEUS_OPENFAAS_URL="http://prometheus.openfaas.localhost"
+ALERTMANAGER_OPENFAAS_USL="http://alertmanager.openfaas.localhost"
+
 function main() {
 
-    # Find Operating System
+    # Identify Operating System
     case "$(uname -s)" in
         Linux*)     execute_linux_dependencies;;
         Darwin*)    execute_mac_dependencies;;
@@ -100,7 +107,7 @@ function delete_kubernetes_services() {
             # Main execution part
             # Grep exact match
             kubectl get namespaces|grep ${index}
-            # Return status of non-zero indicates cancel
+
             if [ "$?" == "0" ]; then
                 kubectl delete namespace ${index}
             fi
@@ -151,7 +158,8 @@ function deploy_kubernetes_services() {
     fi
 
     deploy_selections=(dialog --backtitle "Kubernetes Services Deployment" --separate-output --checklist "Select applications to install:" 20 50 0)
-    deploy_options=("kubernetes_dashboard" "" on
+    deploy_options=(
+             "kubernetes_dashboard" "" on
              "openfaas" "" off
              "airflow" "" off)
     res_deploy_selections+=$("${deploy_selections[@]}" "${deploy_options[@]}" 2>&1 > /dev/tty)
@@ -213,11 +221,33 @@ function deploy_kubernetes_services() {
     clear
     echo $(kubectl cluster-info)
     echo "\nKubernetes Services Deployment Completed!\nVisit: ${urls_string}"
+
     return 0
 }
 
 function deploy_traefik_ingress() {
+
     kubectl apply -f traefik/traefik-namespace.yml
+
+    mkdir ~/.kube/certificates &> /dev/null
+
+    # Generate self signed certificate for TLS use
+    openssl req -subj "/C=/L=/O=*.localhost/CN=*.localhost" \
+        -x509 \
+        -nodes \
+        -days 3650 \
+        -newkey rsa:2048 \
+        -keyout $HOME/.kube/certificates/localhost.tls.key \
+        -out $HOME/.kube/certificates/localhost.tls.crt &> /dev/null
+
+    kubectl get secret  tls-cert --namespace ingress-traefik &> /dev/null
+    if [ "$?" == "0" ]; then
+        kubectl delete secret tls-cert --namespace ingress-traefik &> /dev/null
+    fi
+    kubectl create secret generic tls-cert \
+        --from-file=$HOME/.kube/certificates/localhost.tls.crt \
+        --from-file=$HOME/.kube/certificates/localhost.tls.key \
+        --namespace=ingress-traefik
 
     # Wait until namespace created
     until kubectl get namespaces|grep ingress-traefik
@@ -233,10 +263,13 @@ function deploy_traefik_ingress() {
 }
 
 function get_utl_traefik_ingress() {
-    echo "http://traefik.localhost"
+    echo ${TRAEFIK_URL}
 }
 
 function deploy_kubernetes_dashboard() {
+
+    update_config_file
+
     kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/recommended/kubernetes-dashboard.yaml
     kubectl apply -f kubernetes-dashboard/dashboard-ingress.yml
 
@@ -244,7 +277,7 @@ function deploy_kubernetes_dashboard() {
 }
 
 function get_utl_kubernetes_dashboard() {
-    echo "http://kubernetes.localhost"
+    echo ${KUBE_DASH_URL}
 }
 
 function deploy_airflow() {
@@ -263,7 +296,7 @@ function deploy_airflow() {
 }
 
 function get_utl_airflow() {
-    echo "http://airflow.localhost"
+    echo ${AIRFLOW_URL}
 }
 
 function deploy_openfaas() {
@@ -288,7 +321,26 @@ function deploy_openfaas() {
 }
 
 function get_utl_openfaas() {
-    echo "http://openfaas.localhost\nhttp://prometheus.openfaas.localhost\nhttp://alertmanager.openfaas.localhost"
+    echo "${OPENFAAS_URL}\n${PROMETHEUS_OPENFAAS_URL}\n${ALERTMANAGER_OPENFAAS_USL}"
+}
+
+function update_config_file() {
+    # Adds 'token' to $HOME/.kube/config.local file to allow k8s dashboard connection
+
+    # Get admin token name
+    admin_token_name=$(kubectl get secrets --namespace kube-system | grep admin-token | awk '{print $1}')
+
+    # Describe the admin token secret
+    admin_token_data=$(kubectl describe secrets ${admin_token_name} --namespace kube-system)
+
+    # Get the token
+    admin_token=$(echo "${admin_token_data}" | awk '/token:/,0')
+
+    # Append token to config.local
+    grep "token:    " $HOME/.kube/config.local
+    if [ "$?" != "0" ]; then # If not found
+		echo "    ${admin_token}" | tee -a $HOME/.kube/config.local
+	fi
 }
 
 function execute_linux_dependencies() {
@@ -326,4 +378,4 @@ function terminate_process() {
     exit 1
 }
 
-main "$@"
+main

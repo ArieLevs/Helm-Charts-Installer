@@ -12,3 +12,7 @@ data:
      address = ":80"
      [entryPoints.https]
      address = ":443"
+      [entryPoints.https.tls]
+        [[entryPoints.https.tls.certificates]]
+        certFile = "/ssl/localhost.tls.crt"
+        keyFile = "/ssl/localhost.tls.key"

@@ -27,5 +27,22 @@ Installation
 Run
 ```bash
 cp ~/.kube/config ~/.kube/config.local
+
+kubectl create secret docker-registry dockerhub \
+    --docker-server=[DOCKER_REGISTRY_HOST] \
+    --docker-username=[USERNAME] \
+    --docker-password=[PASSWORD] \
+    --namespace=kube-system
+
 ./k8s-deployment.sh
 ```
+* Make sure to create a DockerHub registry secret.
+
+Access Kubernetes Dashboard
+---------------------------
+
+If `kubernetes_dashboard` selected during installation process,
+In order to login, access https://kubernetes.localhos  
+Press `Choose kubeconfig file` or `...` on right side,  
+Select `~/.kube/config.local` file and press `SIGN IN`
+![](docs/kubernetes_dashboard.png)

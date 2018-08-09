@@ -22,6 +22,9 @@ spec:
       serviceAccountName: traefik-ingress-controller
       terminationGracePeriodSeconds: 60
       volumes:
+        - secret:
+            secretName: tls-cert
+          name: ssl
         - configMap:
             defaultMode: 420
             items:
@@ -54,6 +57,8 @@ spec:
         - --logLevel=INFO
         - --configFile=/etc/traefik/traefik.toml
         volumeMounts:
+          - mountPath: /ssl
+            name: ssl
           - mountPath: /etc/traefik
             name: traefik-config-volume
 ---
