@@ -42,7 +42,20 @@ Access Kubernetes Dashboard
 ---------------------------
 
 If `kubernetes_dashboard` selected during installation process,
-In order to login, access https://kubernetes.localhos  
+In order to login, access https://kubernetes.localhost
 Press `Choose kubeconfig file` or `...` on right side,  
 Select `~/.kube/config.local` file and press `SIGN IN`
 ![](docs/kubernetes_dashboard.png)
+
+- Examine ansible deployments with
+
+```bash
+# Install Python
+brew install python
+# Update ansible latest !!! Must be Ansible >= 2.6
+sudo pip install ansible --upgrade
+# Update openshift !!! Must be openshift >= 0.6
+sudo pip install openshift 
+# Update PyYAML Must be PyYAML >= 3.11
+sudo pip install PyYAML --upgrade
+```

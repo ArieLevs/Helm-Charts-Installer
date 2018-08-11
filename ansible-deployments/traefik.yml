@@ -1,0 +1,5 @@
+- hosts: '{{ hosts }}'
+  serial: '{{ serial | default(1) }}'
+
+  roles:
+    - role: traefik
