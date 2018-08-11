@@ -226,38 +226,34 @@ function deploy_kubernetes_services() {
 }
 
 function deploy_traefik_ingress() {
+    mkdir $HOME/.kube/certificates &> /dev/null
 
-    kubectl apply -f traefik/traefik-namespace.yml
+#    # Generate self signed certificate for TLS use
+#    openssl req -subj "/C=/L=/O=*.localhost/CN=*.localhost" \
+#        -x509 \
+#        -nodes \
+#        -days 3650 \
+#        -newkey rsa:2048 \
+#        -keyout $HOME/.kube/certificates/tls.key \
+#        -out $HOME/.kube/certificates/tls.crt &> /dev/null
+#
+#    tls_key=$(cat ${HOME}/.kube/certificates/tls.key | base64)
+#    tls_crt=$(cat ${HOME}/.kube/certificates/tls.crt | base64)
+#
+#    sed -i -e "s/  defaultCert:.*/  defaultCert: ${tls_crt}/g" ./traefik/values.local.yml
+#    sed -i -e "s/  defaultKey:.*/  defaultKey: ${tls_key}/g" ./traefik/values.local.yml
 
-    mkdir ~/.kube/certificates &> /dev/null
-
-    # Generate self signed certificate for TLS use
-    openssl req -subj "/C=/L=/O=*.localhost/CN=*.localhost" \
-        -x509 \
-        -nodes \
-        -days 3650 \
-        -newkey rsa:2048 \
-        -keyout $HOME/.kube/certificates/localhost.tls.key \
-        -out $HOME/.kube/certificates/localhost.tls.crt &> /dev/null
-
-    kubectl get secret  tls-cert --namespace ingress-traefik &> /dev/null
+    helm list | grep ingress-traefik
     if [ "$?" == "0" ]; then
-        kubectl delete secret tls-cert --namespace ingress-traefik &> /dev/null
+        helm upgrade ingress-traefik --install stable/traefik \
+            --namespace ingress-traefik \
+            -f traefik/values.local.yml
+    else
+        helm install stable/traefik \
+            --name ingress-traefik \
+            --namespace ingress-traefik \
+            -f traefik/values.local.yml
     fi
-    kubectl create secret generic tls-cert \
-        --from-file=$HOME/.kube/certificates/localhost.tls.crt \
-        --from-file=$HOME/.kube/certificates/localhost.tls.key \
-        --namespace=ingress-traefik
-
-    # Wait until namespace created
-    until kubectl get namespaces|grep ingress-traefik
-    do
-        sleep 0.5
-    done
-
-    kubectl apply -f traefik/traefik-confgmap.yml
-    kubectl apply -f traefik/traefik-rbac.yaml
-    kubectl apply -f traefik/traefik-ds.yaml
 
     return 0
 }
@@ -316,7 +312,7 @@ function deploy_openfaas() {
 
     helm upgrade openfaas --install openfaas/openfaas \
         --namespace openfaas \
-        -f openfaas/values.local.yaml
+        -f openfaas/values.local.yml
     return 0
 }
 
@@ -326,19 +322,19 @@ function get_utl_openfaas() {
 
 function update_config_file() {
     # Adds 'token' to $HOME/.kube/config.local file to allow k8s dashboard connection
-
-    # Get admin token name
-    admin_token_name=$(kubectl get secrets --namespace kube-system | grep admin-token | awk '{print $1}')
-
-    # Describe the admin token secret
-    admin_token_data=$(kubectl describe secrets ${admin_token_name} --namespace kube-system)
-
-    # Get the token
-    admin_token=$(echo "${admin_token_data}" | awk '/token:/,0')
-
-    # Append token to config.local
     grep "token:    " $HOME/.kube/config.local
     if [ "$?" != "0" ]; then # If not found
+
+        # Get admin token name
+        admin_token_name=$(kubectl get secrets --namespace kube-system | grep admin-token | awk '{print $1}')
+
+        # Describe the admin token secret
+        admin_token_data=$(kubectl describe secrets ${admin_token_name} --namespace kube-system)
+
+        # Get the token
+        admin_token=$(echo "${admin_token_data}" | awk '/token:/,0')
+
+        # Append token to config.local
 		echo "    ${admin_token}" | tee -a $HOME/.kube/config.local
 	fi
 }
