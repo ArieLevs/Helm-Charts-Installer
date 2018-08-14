@@ -21,6 +21,14 @@ spec:
         - containerPort: 8080
           protocol: TCP
           name: http
+        volumeMounts:
+        - mountPath: /usr/local/airflow/dags
+          name: airflow-dags
+      volumes:
+        - name: airflow-dags
+          hostPath:
+            path: /tmp/airflow-dags
+            type: Directory
 ---
 apiVersion: v1
 kind: Service

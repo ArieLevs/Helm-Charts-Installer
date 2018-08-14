@@ -226,8 +226,9 @@ function deploy_kubernetes_services() {
 }
 
 function deploy_traefik_ingress() {
-    mkdir $HOME/.kube/certificates &> /dev/null
 
+#    mkdir $HOME/.kube/certificates &> /dev/null
+#
 #    # Generate self signed certificate for TLS use
 #    openssl req -subj "/C=/L=/O=*.localhost/CN=*.localhost" \
 #        -x509 \
@@ -243,18 +244,9 @@ function deploy_traefik_ingress() {
 #    sed -i -e "s/  defaultCert:.*/  defaultCert: ${tls_crt}/g" ./traefik/values.local.yml
 #    sed -i -e "s/  defaultKey:.*/  defaultKey: ${tls_key}/g" ./traefik/values.local.yml
 
-    helm list | grep ingress-traefik
-    if [ "$?" == "0" ]; then
-        helm upgrade ingress-traefik --install stable/traefik \
-            --namespace ingress-traefik \
-            -f traefik/values.local.yml
-    else
-        helm install stable/traefik \
-            --name ingress-traefik \
-            --namespace ingress-traefik \
-            -f traefik/values.local.yml
-    fi
-
+    helm upgrade ingress-traefik --install stable/traefik \
+        --namespace ingress-traefik \
+        -f ingress-traefik/values.local.yml
     return 0
 }
 
@@ -263,11 +255,12 @@ function get_utl_traefik_ingress() {
 }
 
 function deploy_kubernetes_dashboard() {
-
     update_config_file
-
-    kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/recommended/kubernetes-dashboard.yaml
-    kubectl apply -f kubernetes-dashboard/dashboard-ingress.yml
+    helm upgrade kubernetes-dashboard --install stable/kubernetes-dashboard \
+        --namespace kubesystem \
+        -f kubernetes-dashboard/values.local.yml
+    #kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/recommended/kubernetes-dashboard.yaml
+    #kubectl apply -f kubernetes-dashboard/dashboard-ingress.yml
 
     return 0
 }
@@ -277,6 +270,8 @@ function get_utl_kubernetes_dashboard() {
 }
 
 function deploy_airflow() {
+    mkdir /tmp/airflow-dags &> /dev/null
+
     kubectl apply -f airflow/airflow-namespace.yml
 
     # Wait until namespace created
@@ -292,7 +287,7 @@ function deploy_airflow() {
 }
 
 function get_utl_airflow() {
-    echo ${AIRFLOW_URL}
+    echo "${AIRFLOW_URL} - Use /tmp/airflow-dags as persistent DAG files directory."
 }
 
 function deploy_openfaas() {
