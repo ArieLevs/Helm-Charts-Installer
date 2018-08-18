@@ -8,6 +8,8 @@ AIRFLOW_URL="http://airflow.localhost"
 OPENFAAS_URL="http://openfaas.localhost"
 PROMETHEUS_OPENFAAS_URL="http://prometheus.openfaas.localhost"
 ALERTMANAGER_OPENFAAS_USL="http://alertmanager.openfaas.localhost"
+REDIS_URL=""
+JENKIS_URL="http://jenkins.localhost"
 
 function main() {
 
@@ -67,8 +69,11 @@ function main() {
 
 function delete_kubernetes_services() {
     delete_selections=(dialog --backtitle "Kubernetes Services Delete" --separate-output --checklist "Select applications to delete:" 20 50 0)
-    delete_options=("openfaas openfaas-fn" "" off
-                    "airflow" "" off)
+    delete_options=("kubernetes-dashboard" "" off
+                    "jenkins" "" off
+                    "airflow" "" off
+                    "openfaas" "" off
+                    "redis" "" off)
     res_delete_selections+=$("${delete_selections[@]}" "${delete_options[@]}" 2>&1 > /dev/tty)
 
     # Return status of non-zero indicates cancel
@@ -76,7 +81,7 @@ function delete_kubernetes_services() {
         terminate_process
     fi
 
-    # selections is now: { app1 app2 app3... }
+    # selections are now: { app1 app2 app3... }
     # Cast selections into an Array delimiter is space
     deployments_array=(${res_delete_selections// / })
     num_of_deployments=${#deployments_array[@]}
@@ -105,12 +110,7 @@ function delete_kubernetes_services() {
             [ ${counter} -gt 100 ] && break  # break when reach the 100% (or greater
                                        # since Bash only does integer arithmetic)
             # Main execution part
-            # Grep exact match
-            kubectl get namespaces|grep ${index}
-
-            if [ "$?" == "0" ]; then
-                kubectl delete namespace ${index}
-            fi
+            helm delete --purge ${index}
         done
         ) | dialog --backtitle "Kubernetes Services Delete" --title "Kubernetes Services Delete" --gauge "Wait please..." 20 50 0
 
@@ -160,8 +160,10 @@ function deploy_kubernetes_services() {
     deploy_selections=(dialog --backtitle "Kubernetes Services Deployment" --separate-output --checklist "Select applications to install:" 20 50 0)
     deploy_options=(
              "kubernetes_dashboard" "" on
+             "jenkins" "" off
              "openfaas" "" off
-             "airflow" "" off)
+             "airflow" "" off
+             "redis" "" off)
     res_deploy_selections+=$("${deploy_selections[@]}" "${deploy_options[@]}" 2>&1 > /dev/tty)
 
     # Return status of non-zero indicates cancel
@@ -172,11 +174,10 @@ function deploy_kubernetes_services() {
     # Add traefik_ingress to the array
     res_deploy_selections+=' traefik_ingress'
 
-    # selections is now: { app1 app2 app3... ... traefik_ingress }
+    # selections are now: { app1 app2 app3... ... traefik_ingress }
     # Cast selections into an Array
     deployments_array=(${res_deploy_selections// / })
     num_of_deployments=${#deployments_array[@]}
-
 
     urls_string="\n"
     step=$((100/num_of_deployments))  # progress bar step
@@ -210,7 +211,7 @@ function deploy_kubernetes_services() {
     for index in ${deployments_array[@]}
     do
         # Append to url string the return from relevant function
-        urls_string="${urls_string}$(get_utl_${index}) \n"
+        urls_string="${urls_string}$(get_url_${index}) \n"
     done
 
     dialog --backtitle "Kubernetes Services Deployment" \
@@ -246,47 +247,36 @@ function deploy_traefik_ingress() {
 
     helm upgrade ingress-traefik --install stable/traefik \
         --namespace ingress-traefik \
-        -f ingress-traefik/values.local.yml
+        -f deployments/ingress-traefik/values.local.yml
     return 0
 }
 
-function get_utl_traefik_ingress() {
+function get_url_traefik_ingress() {
     echo ${TRAEFIK_URL}
 }
 
 function deploy_kubernetes_dashboard() {
     update_config_file
     helm upgrade kubernetes-dashboard --install stable/kubernetes-dashboard \
-        --namespace kubesystem \
-        -f kubernetes-dashboard/values.local.yml
-    #kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/master/src/deploy/recommended/kubernetes-dashboard.yaml
-    #kubectl apply -f kubernetes-dashboard/dashboard-ingress.yml
-
+        --namespace kube-system \
+        -f deployments/kubernetes-dashboard/values.local.yml
     return 0
 }
 
-function get_utl_kubernetes_dashboard() {
+function get_url_kubernetes_dashboard() {
     echo ${KUBE_DASH_URL}
 }
 
 function deploy_airflow() {
     mkdir /tmp/airflow-dags &> /dev/null
 
-    kubectl apply -f airflow/airflow-namespace.yml
-
-    # Wait until namespace created
-    until kubectl get namespaces|grep airflow
-    do
-        sleep 0.5
-    done
-
-    kubectl apply -f airflow/airflow-ingress.yml
-    kubectl apply -f airflow/airflow-deployment.yml
-
+    helm upgrade airflow --install ./airflow \
+        --namespace airflow \
+        -f deployments/airflow/values.local.yaml
     return 0
 }
 
-function get_utl_airflow() {
+function get_url_airflow() {
     echo "${AIRFLOW_URL} - Use /tmp/airflow-dags as persistent DAG files directory."
 }
 
@@ -307,12 +297,35 @@ function deploy_openfaas() {
 
     helm upgrade openfaas --install openfaas/openfaas \
         --namespace openfaas \
-        -f openfaas/values.local.yml
+        -f deployments/openfaas/values.local.yml
     return 0
 }
 
-function get_utl_openfaas() {
+function get_url_openfaas() {
     echo "${OPENFAAS_URL}\n${PROMETHEUS_OPENFAAS_URL}\n${ALERTMANAGER_OPENFAAS_USL}"
+}
+
+function deploy_redis() {
+    helm upgrade redis --install stable/redis \
+        --namespace redis \
+        -f deployments/redis/values.local.yml
+    return 0
+}
+
+function get_url_redis() {
+    echo ${REDIS_URL}
+}
+
+function deploy_jenkins() {
+    helm upgrade jenkins --install stable/jenkins \
+        --namespace jenkins \
+        -f deployments/jenkins/values.local.yml
+    return 0
+}
+
+function get_url_jenkins() {
+    JENKINS_PASS="$(printf $(kubectl get secret --namespace jenkins jenkins -o jsonpath="{.data.jenkins-admin-password}" | base64 --decode);echo)"
+    echo "${JENKIS_URL} - Username: admin, password: ${JENKINS_PASS}"
 }
 
 function update_config_file() {
@@ -336,8 +349,8 @@ function update_config_file() {
 
 function execute_linux_dependencies() {
     case "$(awk -F= '/^NAME/{print $2}' /etc/os-release)" in
-        "Ubuntu"*)          sudo apt-get install -y dialog;;
-        "CentOS Linux"*)    sudo yum install -y dialog;;
+        "Ubuntu"*)          echo "Ubuntu not yet supported" && exit 1;; #sudo apt-get install -y dialog;;
+        "CentOS Linux"*)    echo "CentOS not yet supported" && exit 1;; #sudo yum install -y dialog;;
         *)                  echo "Linux version not support, app terminated!" && exit 1;;
     esac
 }
