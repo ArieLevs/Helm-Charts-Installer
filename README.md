@@ -27,16 +27,8 @@ Installation
 Run
 ```bash
 cp ~/.kube/config ~/.kube/config.local
-
-kubectl create secret docker-registry dockerhub \
-    --docker-server=[DOCKER_REGISTRY_HOST] \
-    --docker-username=[USERNAME] \
-    --docker-password=[PASSWORD] \
-    --namespace=kube-system
-
 ./k8s-deployment.sh
 ```
-* Make sure to create a DockerHub registry secret.
 
 Access Kubernetes Dashboard
 ---------------------------
@@ -46,16 +38,3 @@ In order to login, access https://kubernetes.localhost
 Press `Choose kubeconfig file` or `...` on right side,  
 Select `~/.kube/config.local` file and press `SIGN IN`
 ![](docs/kubernetes_dashboard.png)
-
-- Examine ansible deployments with
-
-```bash
-# Install Python
-brew install python
-# Update ansible latest !!! Must be Ansible >= 2.6
-sudo pip install ansible --upgrade
-# Update openshift !!! Must be openshift >= 0.6
-sudo pip install openshift 
-# Update PyYAML Must be PyYAML >= 3.11
-sudo pip install PyYAML --upgrade
-```
