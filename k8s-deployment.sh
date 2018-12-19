@@ -10,6 +10,7 @@ PROMETHEUS_OPENFAAS_URL="http://prometheus.openfaas.localhost"
 ALERTMANAGER_OPENFAAS_USL="http://alertmanager.openfaas.localhost"
 REDIS_URL=""
 JENKIS_URL="http://jenkins.localhost"
+RABBITMQ_URL="http://rabbitmq.localhost/"
 
 function main() {
 
@@ -73,7 +74,8 @@ function delete_kubernetes_services() {
                     "jenkins" "" off
                     "airflow" "" off
                     "openfaas" "" off
-                    "redis" "" off)
+                    "redis" "" off
+                    "rabbitmq" "" off)
     res_delete_selections+=$("${delete_selections[@]}" "${delete_options[@]}" 2>&1 > /dev/tty)
 
     # Return status of non-zero indicates cancel
@@ -163,7 +165,8 @@ function deploy_kubernetes_services() {
              "jenkins" "" off
              "openfaas" "" off
              "airflow" "" off
-             "redis" "" off)
+             "redis" "" off
+             "rabbitmq" "" off)
     res_deploy_selections+=$("${deploy_selections[@]}" "${deploy_options[@]}" 2>&1 > /dev/tty)
 
     # Return status of non-zero indicates cancel
@@ -326,6 +329,17 @@ function deploy_jenkins() {
 function get_url_jenkins() {
     JENKINS_PASS="$(printf $(kubectl get secret --namespace jenkins jenkins -o jsonpath="{.data.jenkins-admin-password}" | base64 --decode);echo)"
     echo "${JENKIS_URL} - Username: admin, password: ${JENKINS_PASS}"
+}
+
+function deploy_rabbitmq() {
+    helm upgrade rabbitmq --install stable/rabbitmq-ha \
+        --namespace rabbitmq \
+        -f deployments/rabbitmq/values.local2.yml
+    return 0
+}
+
+function get_url_rabbitmq() {
+    echo "${RABBITMQ_URL} - Username: rabbitmq, password: rabbitmq"
 }
 
 function update_config_file() {
