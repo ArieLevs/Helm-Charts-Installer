@@ -17,7 +17,7 @@ Master:
   Component: "jenkins-master"
   UseSecurity: true
   AdminUser: admin
-  # AdminPassword: <defaults to random>
+  AdminPassword: admin
   resources:
     requests:
       cpu: "50m"
@@ -84,10 +84,12 @@ Master:
   # JMXPort: 4000
   # List of plugins to be install during Jenkins master start
   InstallPlugins:
-    - kubernetes:1.12.0
-    - workflow-job:2.23
+    - nexus-jenkins-plugin:3.3.20181207-134824.d240aa3
+    - configuration-as-code:1.4
+    - kubernetes:1.13.8
+    - workflow-job:2.31
     - workflow-aggregator:2.5
-    - credentials-binding:1.16
+    - credentials-binding:1.17
     - git:3.9.1
   # Used to approve a list of groovy functions in pipelines used the script-security plugin. Can be viewed under /scriptApproval
   # ScriptApproval:
@@ -176,12 +178,13 @@ Persistence:
   AccessMode: ReadWriteOnce
   Size: 8Gi
   volumes:
-  #  - name: nothing
-  #    emptyDir: {}
+    - name: config-as-code
+      configMap:
+        name: jenkins-configuration-as-code
   mounts:
-  #  - mountPath: /var/nothing
-  #    name: nothing
-  #    readOnly: true
+    - name: config-as-code
+      mountPath: /var/jenkins_home/casc_configs
+      readOnly: true
 
 NetworkPolicy:
   # Enable creation of NetworkPolicy resources.

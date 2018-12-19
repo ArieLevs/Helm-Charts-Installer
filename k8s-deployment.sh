@@ -320,6 +320,7 @@ function get_url_redis() {
 }
 
 function deploy_jenkins() {
+    kubectl apply -f deployments/jenkins/configmap.yml --namespace jenkins
     helm upgrade jenkins --install stable/jenkins \
         --namespace jenkins \
         -f deployments/jenkins/values.local.yml
