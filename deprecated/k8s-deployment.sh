@@ -17,6 +17,7 @@ function main() {
     # Identify Operating System
     case "$(uname -s)" in
         Linux*)     execute_linux_dependencies;;
+        Linux*)     execute_linux_dependencies;;
         Darwin*)    execute_mac_dependencies;;
         *)          echo "Operating System not support, app terminated!" && exit 1;;
     esac
@@ -35,6 +36,12 @@ function main() {
     fi
 
     export KUBECONFIG=${K8S_CONFIG}
+
+    # Check if connection to k8s cluster established
+    kubectl cluster-info > /dev/null 2>&1
+    if [ "$?" != "0" ]; then
+        terminate_process "The connection to k8s cluster was refused - make sure cluster is up and running"
+    fi
 
     ### Install tiller on k8s cluster ###
     kubectl get serviceaccount tiller --namespace kube-system
@@ -377,7 +384,7 @@ function execute_mac_dependencies() {
         brew install dialog
     fi
     # Check if kubernetes-helm already installed
-    brew install kubernetes-helm
+    brew list kubernetes-helm > /dev/null 2>&1
     if [ "$?" != "0" ]; then
         brew install kubernetes-helm
     fi
@@ -393,6 +400,9 @@ function unexpected_process_termination() {
 
 function terminate_process() {
     clear
+    if [ ! -z "$1" ]; then
+        echo "$1"
+    fi
     echo "Kubernetes Services Deployment Terminated"
     exit 1
 }

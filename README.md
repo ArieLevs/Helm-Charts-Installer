@@ -26,9 +26,12 @@ Installation
 
 Run
 ```bash
-cp ~/.kube/config ~/.kube/config.local
-./k8s-deployment.sh
+pip install helm-charts
 ```
+
+Usage
+-----
+execute `helm-charts` from command line
 
 Access Kubernetes Dashboard
 ---------------------------

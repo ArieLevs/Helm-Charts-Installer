@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: jenkins-configuration-as-code
-data:
-  jenkins.yaml: |
-    jenkins:
-
-    tool:
