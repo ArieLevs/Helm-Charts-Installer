@@ -1,5 +1,8 @@
 Kubernetes Local Services
 =========================
+[![](https://img.shields.io/pypi/v/helm-charts.svg)](https://pypi.org/project/helm-charts/)
+[![](https://img.shields.io/pypi/l/helm-charts.svg?colorB=blue)](https://pypi.org/project/helm-charts/)
+[![](https://img.shields.io/pypi/pyversions/helm-charts.svg)](https://pypi.org/project/helm-charts/)
 
 Install various Kubernetes services on your local Kubernetes installation 
 
@@ -31,7 +34,7 @@ pip install helm-charts
 
 Usage
 -----
-execute `helm-charts` from command line
+execute `helm_charts` from command line
 
 Access Kubernetes Dashboard
 ---------------------------
