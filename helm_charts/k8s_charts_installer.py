@@ -1,4 +1,3 @@
-#python>=3.5
 
 import subprocess
 import os
@@ -95,38 +94,42 @@ class CascadingBoxes(urwid.WidgetPlaceholder):
             return super(CascadingBoxes, self).keypress(size, key)
 
 
-# Make sure python 3.5 and above is used
-if sys.version_info[0] < 3 or sys.version_info[1] < 5:
-    print("Python 3.5 is a minimal requirement")
-    exit(1)
+def perform_init_checks():
+    # Make sure python 3.5 and above is used
+    if sys.version_info[0] < 3 or sys.version_info[1] < 5:
+        print("Python 3.5 is a minimal requirement")
+        exit(1)
 
-# Make sure config.local exists
-config_file = Path(str(Path.home()) + "/.kube/config.local")
-if not config_file.exists():
-    print("Could not locate {}\nMake sure to create it".format(config_file))
-    exit(1)
+    # Make sure config.local exists
+    config_file = Path(str(Path.home()) + "/.kube/config.local")
+    if not config_file.exists():
+        print("Could not locate {}\nMake sure to create it".format(config_file))
+        exit(1)
 
-os.environ["KUBECONFIG"] = str(config_file)
+    os.environ["KUBECONFIG"] = str(config_file)
 
-# Make sure kubectl command exists
-if shutil.which("kubectl") is None:
-    print("Could execute 'kubectl' command\nMake sure 'kubectl' installed")
-    exit(1)
+    # Make sure kubectl command exists
+    if shutil.which("kubectl") is None:
+        print("Could execute 'kubectl' command\nMake sure 'kubectl' installed")
+        exit(1)
 
-# .run return CompletedProcess with returncode and stdout and stderr values as bytes object, using UTF-8 decode
-cluster_info_output = subprocess.run(["kubectl", "cluster-info"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    # .run return CompletedProcess with returncode and stdout and stderr values as bytes object, using UTF-8 decode
+    cluster_info_output = subprocess.run(["kubectl", "cluster-info"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-# In case returncode is not 0
-if cluster_info_output.returncode:
-    print(cluster_info_output.stderr.decode('utf-8') +
-          "Make sure your cluster is up and running, and config file contains correct values")
-    exit(1)
-else:
-    print(cluster_info_output.stdout.decode('utf-8'))
+    # In case returncode is not 0
+    if cluster_info_output.returncode:
+        print(cluster_info_output.stderr.decode('utf-8') +
+              "Make sure your cluster is up and running, and config file contains correct values")
+        exit(1)
+    else:
+        print(cluster_info_output.stdout.decode('utf-8'))
+
+
+top = CascadingBoxes(menu_top)
 
 
 def main():
-    top = CascadingBoxes(menu_top)
+    perform_init_checks()
     urwid.MainLoop(top, palette=[('reversed', 'standout', '')]).run()
 
 
