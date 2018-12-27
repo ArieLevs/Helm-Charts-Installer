@@ -124,5 +124,11 @@ if cluster_info_output.returncode:
 else:
     print(cluster_info_output.stdout.decode('utf-8'))
 
-top = CascadingBoxes(menu_top)
-urwid.MainLoop(top, palette=[('reversed', 'standout', '')]).run()
+
+def main():
+    top = CascadingBoxes(menu_top)
+    urwid.MainLoop(top, palette=[('reversed', 'standout', '')]).run()
+
+
+if __name__ == "__main__":
+    main()
