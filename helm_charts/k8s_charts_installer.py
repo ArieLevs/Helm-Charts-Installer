@@ -66,6 +66,8 @@ menu_top = menu(u'Main Menus', [
 ])
 
 
+
+
 class CascadingBoxes(urwid.WidgetPlaceholder):
     max_box_levels = 4
 
@@ -123,6 +125,41 @@ def perform_init_checks():
         exit(1)
     else:
         print(cluster_info_output.stdout.decode('utf-8'))
+
+
+def identify_installed_helm_charts():
+    """
+    Function will perform a manipulation on a string output from the 'helm list' command
+    and return an array of dicts with installed chart names and namespaces as strings
+    as {'chart_name': 'some_chart_name'}, {'name_space': 'some_name_space'}
+
+    :return: array of dicts
+    """
+    # Execute 'helm list' command, returned as CompletedProcess
+    installed_helm_completed_process = subprocess.run(["helm", "list"],
+                                                      stdout=subprocess.PIPE,
+                                                      stderr=subprocess.PIPE)
+    installed_charts = []
+
+    # In case returncode is 0
+    if not installed_helm_completed_process.returncode:
+        # get stdout from installed_helm_completed_process, and decode for 'utf-8'
+        # split stdout of installed_helm_completed_process by 'new line'
+        installed_helm_stdout = installed_helm_completed_process.stdout.decode('utf-8').split("\n")
+        # for every line in installed charts, excluding the headers line (Name, Revision, Updated etc...)
+        for line in installed_helm_stdout[1:]:
+            # each stdout 'helm list' line composed by tabs delimiter, split it
+            chart_details = line.split("\t")
+
+            tmp_array = []
+            if chart_details[0] != "":
+                # Add current line chart values to dict
+                tmp_array.append({'chart_name': chart_details[0].strip()})
+                tmp_array.append({'name_space': chart_details[5].strip()})
+                # Update final array with the temp array of dicts of current helm deployment
+                installed_charts.append(tmp_array)
+
+    return installed_charts
 
 
 top = CascadingBoxes(menu_top)

@@ -4,7 +4,7 @@ Kubernetes Local Services
 [![](https://img.shields.io/pypi/l/helm-charts.svg?colorB=blue)](https://pypi.org/project/helm-charts/)
 [![](https://img.shields.io/pypi/pyversions/helm-charts.svg)](https://pypi.org/project/helm-charts/)
 
-Install various Kubernetes services on your local Kubernetes installation 
+Install various Kubernetes Helm charts on your local Kubernetes installation 
 
 - [Traefik](https://traefik.io/) (As Ingress Controller)
 - [Kubernetes Dashboard](https://kubernetes.io/docs/tasks/access-application-cluster/web-ui-dashboard/)
