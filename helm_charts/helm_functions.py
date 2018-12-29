@@ -182,20 +182,27 @@ def install_helm_charts(charts_array):
     installation process will init only if 'charts_array' has a value that also exists is 'supported_helm_deployments'
 
     :param charts_array: array of strings
-    :return: None
+    :return: return code and value from execution command as dict
     """
     # Update helm repo before installation
     subprocess.run(["helm", "repo", "update"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
+    status = 0
+    value = 'no errors found'
     for deployment in supported_helm_deployments:
         # Only if current chart name exists in the input 'charts_array'
         if deployment['chart_name'] in charts_array:
-            subprocess.run(["helm", "upgrade", deployment['chart_name'],
-                            "--install", deployment['helm_repo_name'],
-                            "--namespace", deployment['name_space'],
-                            "-f", deployment['values_file']],
-                           stdout=subprocess.PIPE,
-                           stderr=subprocess.PIPE)
+            completed_process_object = subprocess.run(["helm", "upgrade", deployment['chart_name'],
+                                                       "--install", deployment['helm_repo_name'],
+                                                       "--namespace", deployment['name_space'],
+                                                       "-f", deployment['values_file']],
+                                                      stdout=subprocess.PIPE,
+                                                      stderr=subprocess.PIPE)
+            # In case of a non 0 return code, update return from last iteration
+            if completed_process_object.returncode != 0:
+                status = completed_process_object.stderr.decode('utf-8')
+                value = completed_process_object.stderr.decode('utf-8') + " *** Additional errors may occurred"
+    return {'status': status, 'value': value}
 
 
 def delete_helm_installations(charts_array):
@@ -205,9 +212,16 @@ def delete_helm_installations(charts_array):
     ['ingress-traefik', 'kubernetes-dashboard', ...]
 
     :param charts_array: array of strings
-    :return: None
+    :return: return code and value from execution command as dict
     """
+    status = 0
+    value = 'no errors found'
     for installation in charts_array:
-        subprocess.run(["helm", "delete", "--purge", installation],
-                       stdout=subprocess.PIPE,
-                       stderr=subprocess.PIPE)
+        completed_process_object = subprocess.run(["helm", "delete", "--purge", installation],
+                                                  stdout=subprocess.PIPE,
+                                                  stderr=subprocess.PIPE)
+        # In case of a non 0 return code, update return from last iteration
+        if completed_process_object.returncode != 0:
+            status = completed_process_object.stderr.decode('utf-8')
+            value = completed_process_object.stderr.decode('utf-8') + " *** Additional errors may occurred"
+    return {'status': status, 'value': value}
