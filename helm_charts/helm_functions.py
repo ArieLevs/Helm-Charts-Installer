@@ -24,10 +24,12 @@ supported_helm_deployments = [
 ]
 
 
-def identify_installed_helm_repos():
+def identify_installed_helm_repos(return_only_decoded_string=False):
     """
     Function will perform a manipulation on a string output from the 'helm repo list' command
-    and return an array of dicts with installed repos names and urls as strings
+    If 'return_only_decoded_string' True, do not perform any string processing
+
+    Returns an array of dicts with installed repos names and urls as strings
     as [{'repo_name': 'some_repo_name', 'repo_url': 'some_repo_url'}]
 
     'helm repo list' command return example:
@@ -40,12 +42,21 @@ def identify_installed_helm_repos():
     and checking that the first (0) value is 'NAME' and second (1) value is 'URL'
     an exception will be raised if the structure was change by HELM developers
 
+    :param return_only_decoded_string: if True then return decoded (utf-8) "original" 'helm repo list' command output
     :return: array of dicts with repo installations
     """
     # Execute 'helm list' command, returned as CompletedProcess
     installed_repos_completed_process = subprocess.run(["helm", "repo", "list"],
                                                        stdout=subprocess.PIPE,
                                                        stderr=subprocess.PIPE)
+
+    if return_only_decoded_string:
+        if installed_repos_completed_process.returncode == 0:
+            value = installed_repos_completed_process.stdout.decode('utf-8').strip()
+        else:
+            value = installed_repos_completed_process.stderr.decode('utf-8').strip()
+        return value
+
     installed_repos = []
 
     # In case returncode is 0
@@ -119,10 +130,12 @@ def remove_helm_repo(repos_array):
     return {'status': status, 'value': value}
 
 
-def identify_installed_helm_charts():
+def identify_installed_helm_charts(return_only_decoded_string=False):
     """
     Function will perform a manipulation on a string output from the 'helm list' command
-    and return an array of dicts with installed chart names and namespaces as strings
+    If 'return_only_decoded_string' True, do not perform any string processing
+
+    Returns an array of dicts with installed chart names and namespaces as strings
     as [{'chart_name': 'some_chart_name', 'name_space': 'some_name_space'}]
 
     'helm list' command return example:
@@ -134,12 +147,21 @@ def identify_installed_helm_charts():
     and checking that the first (0) value is 'NAME' and sixth (5) value is 'NAMESPACE'
     an exception will be raised if the structure was change by HELM developers
 
+    :param return_only_decoded_string: if True then return decoded (utf-8) "original" 'helm list' command output
     :return: array of dicts with helm installations
     """
     # Execute 'helm list' command, returned as CompletedProcess
     installed_helm_completed_process = subprocess.run(["helm", "list"],
                                                       stdout=subprocess.PIPE,
                                                       stderr=subprocess.PIPE)
+
+    if return_only_decoded_string:
+        if installed_helm_completed_process.returncode == 0:
+            value = installed_helm_completed_process.stdout.decode('utf-8').strip()
+        else:
+            value = installed_helm_completed_process.stderr.decode('utf-8').strip()
+        return value
+
     installed_charts = []
 
     # In case returncode is 0
