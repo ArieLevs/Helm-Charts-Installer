@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jenkins-configuration-as-code
+data:
+  jenkins.yaml: |
+    jenkins:
+      systemMessage: |
+          Welcome to our build server.
+
+          This Jenkins is 100% configured and managed 'as code'.
+          Config is now mostly handled by 'Jenkins Configuration as Code Plugin' (JCasC).
+          JCasC config can be found in the jenkins.yaml file in the $JENKINS_HOME/casc/ folder.
+
+          some settings are still injected from init.groovy.d scripts,
+          but these settings will be ported over to JCasC as support becomes available.
+    tool:

@@ -22,7 +22,8 @@ setuptools.setup(
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "License :: OSI Approved :: Apache Software License",
-        "Operating System :: OS Independent",
+        "Operating System :: Unix",
+        "Operating System :: MacOS",
     ),
     entry_points={
         'console_scripts': [

@@ -1,0 +1,90 @@
+# Default values for airflow.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+nginx:
+  replicaCount: 1
+  image:
+    privateRepo: false
+    repository: nginx
+    tag: alpine
+    imagePullPolicy: IfNotPresent
+
+configmap:
+  nalkinscloudApi:
+    serviceName: nalkinscloud-api
+    servicePort: 443
+    namespace: nalkinscloud-api
+    serverName: api-alpha.localhost
+    staticRoot: /static/nalkinscloud_api/
+  nalkinscloudFrontend:
+    serviceName: nalkinscloud-frontend
+    servicePort: 443
+    namespace: nalkinscloud-frontend
+    serverName: alpha.localhost
+    staticRoot: /static/nalkinscloud_frontend/
+  nalkinscloudResume:
+    serviceName: nalkinscloud-resume
+    servicePort: 443
+    namespace: nalkinscloud-resume
+    serverName: resume-alpha.localhost
+    staticRoot: /static/nalkinscloud_resume/
+
+service:
+  type: ClusterIP
+  port: 443
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: "traefik"
+    traefik.ingress.kubernetes.io/frontend-entry-points: http, https
+  path: /
+  hosts:
+    - api-alpha.localhost
+    - alpha.localhost
+    - resume-alpha.localhost
+  tls: {}
+#    - secretName: nalkins-cloud-tls
+#      hosts:
+#        - api-alpha.nalkins.cloud
+#        - alpha.nalkins.cloud
+#        - resume-alpha.nalkins.cloud
+
+persistent:
+  enabled: true
+
+  frontendApi:
+    capacity:
+      storage: 50Gi
+    nfs:
+      enabled: false
+      server:
+      path:
+    local:
+      enabled: true
+      path: /tmp/staticfiles
+  resume:
+    capacity:
+      storage: 50Gi
+    nfs:
+      enabled: false
+      server:
+      path:
+    local:
+      enabled: true
+      path: /tmp/staticfiles
+
+resources: {}
+  # limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
