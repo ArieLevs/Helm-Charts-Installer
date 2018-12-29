@@ -2,10 +2,10 @@
 import urwid
 import urwid.raw_display
 import urwid.web_display
-from helm_functions import *
-from init_checks import init_checks
-from kubectl_functions import *
-from helper import *
+from helm_charts.helm_functions import *
+from helm_charts.init_checks import init_checks
+from helm_charts.kubectl_functions import *
+from helm_charts.helper import *
 
 
 def main():

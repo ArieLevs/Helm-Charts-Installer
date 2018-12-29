@@ -1,3 +1,5 @@
+
+helm_charts/__pycache__/
 .idea/
 .DS_Store
 */.DS_Store
