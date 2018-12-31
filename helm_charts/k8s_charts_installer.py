@@ -1,17 +1,26 @@
 
+import argparse
 import urwid
 import urwid.raw_display
 import urwid.web_display
+from pathlib import Path
 from helm_charts.helm_functions import *
 from helm_charts.init_checks import init_checks
 from helm_charts.kubectl_functions import *
 from helm_charts.helper import *
+# from helm_functions import *
+# from init_checks import init_checks
+# from kubectl_functions import *
+# from helper import *
+
+config_file = str(Path.home()) + "/.kube/config"
+cluster_context = "docker-for-desktop"
 
 
 def main():
 
     text_header = (u"Helm charts installer -  "
-                   u"UP / DOWN / PAGE UP / PAGE DOWN scroll.  F8 exits.")
+                   u"UP / DOWN / PAGE UP / PAGE DOWN scroll.  ctrl+e exits.")
     text_footer = remove_ansi_color_from_string(get_cluster_info().split("\n")[0])
     text_intro = [('important', u"Helm charts installer "),
                   u"installs kubernetes helm charts on a configured cluster, "
@@ -162,7 +171,7 @@ def main():
         screen = urwid.raw_display.Screen()
 
     def unhandled(key):
-        if key == 'f8':
+        if key == 'ctrl e':
             raise urwid.ExitMainLoop()
 
     urwid.MainLoop(frame, palette, screen, unhandled_input=unhandled).run()
@@ -178,6 +187,21 @@ def setup():
 
 
 if '__main__' == __name__ or urwid.web_display.is_web_request():
-    print("Starting applications, please wait...")
-    init_checks()
+    parser = argparse.ArgumentParser(description='Python Helm Charts Installer')
+    parser.add_argument('--config-file', help='Path to kubernetes config file, '
+                                              'Default is `{}`'.format(config_file), required=False)
+    parser.add_argument('--use-context', help='Cluster context name to use, '
+                                              'Default is `{}`'.format(cluster_context), required=False)
+    parser.add_argument('--helm-init', action='store_true', help='Perform "helm init" on cluster', required=False)
+
+    args = vars(parser.parse_args())
+
+    if args['config_file'] is not None:
+        config_file = args['config_file']
+
+    if args['use_context'] is not None:
+        cluster_context = args['use_context']
+
+    print("Starting application, please wait...")
+    init_checks(config_file, cluster_context, args['helm_init'])
     setup()

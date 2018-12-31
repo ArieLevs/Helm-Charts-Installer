@@ -15,7 +15,7 @@ setuptools.setup(
     license='Apache License 2.0',
     packages=setuptools.find_packages(),
     install_requires=[
-          'urwid',
+        'urwid',
       ],
     classifiers=(
         "Programming Language :: Python :: 3",
