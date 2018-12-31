@@ -16,6 +16,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     install_requires=[
         'urwid',
+        'argparse',
       ],
     classifiers=(
         "Programming Language :: Python :: 3",
