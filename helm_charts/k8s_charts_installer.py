@@ -18,7 +18,35 @@ cluster_context = "docker-for-desktop"
 
 
 def main():
+    urwid.web_display.set_preferences("Urwid Tour")
+    # try to handle short web requests quickly
+    if urwid.web_display.handle_short_request():
+        return
 
+    global config_file
+    global cluster_context
+
+    parser = argparse.ArgumentParser(description='Python Helm Charts Installer')
+    parser.add_argument('--config-file', help='Path to kubernetes config file, '
+                                              'Default is `{}`'.format(config_file), required=False)
+    parser.add_argument('--use-context', help='Cluster context name to use, '
+                                              'Default is `{}`'.format(cluster_context), required=False)
+    parser.add_argument('--helm-init', action='store_true', help='Perform "helm init" on cluster', required=False)
+
+    args = vars(parser.parse_args())
+
+    if args['config_file'] is not None:
+        config_file = args['config_file']
+
+    if args['use_context'] is not None:
+        cluster_context = args['use_context']
+
+    print("Starting application, please wait...")
+    init_checks(config_file, cluster_context, args['helm_init'])
+    start_urwid()
+
+
+def start_urwid():
     text_header = (u"Helm charts installer -  "
                    u"UP / DOWN / PAGE UP / PAGE DOWN scroll.  ctrl+e exits.")
     text_footer = remove_ansi_color_from_string(get_cluster_info().split("\n")[0])
@@ -177,31 +205,5 @@ def main():
     urwid.MainLoop(frame, palette, screen, unhandled_input=unhandled).run()
 
 
-def setup():
-    urwid.web_display.set_preferences("Urwid Tour")
-    # try to handle short web requests quickly
-    if urwid.web_display.handle_short_request():
-        return
-
+if __name__ == '__main__':
     main()
-
-
-if '__main__' == __name__ or urwid.web_display.is_web_request():
-    parser = argparse.ArgumentParser(description='Python Helm Charts Installer')
-    parser.add_argument('--config-file', help='Path to kubernetes config file, '
-                                              'Default is `{}`'.format(config_file), required=False)
-    parser.add_argument('--use-context', help='Cluster context name to use, '
-                                              'Default is `{}`'.format(cluster_context), required=False)
-    parser.add_argument('--helm-init', action='store_true', help='Perform "helm init" on cluster', required=False)
-
-    args = vars(parser.parse_args())
-
-    if args['config_file'] is not None:
-        config_file = args['config_file']
-
-    if args['use_context'] is not None:
-        cluster_context = args['use_context']
-
-    print("Starting application, please wait...")
-    init_checks(config_file, cluster_context, args['helm_init'])
-    setup()
