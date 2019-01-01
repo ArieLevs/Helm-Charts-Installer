@@ -5,23 +5,31 @@ supported_helm_deployments = [
     {'chart_name': 'ingress-traefik',
      'helm_repo_name': 'stable/traefik',
      'name_space': 'ingress-traefik',
-     'values_file': 'values_files/ingress-traefik/values.local.yml'},
+     'values_file': 'values_files/ingress-traefik/values.local.yml',
+     'private_image': False},
 
     {'chart_name': 'kubernetes-dashboard',
      'helm_repo_name': 'stable/kubernetes-dashboard',
      'name_space': 'kube-system',
-     'values_file': 'values_files/kubernetes-dashboard/values.local.yml'},
+     'values_file': 'values_files/kubernetes-dashboard/values.local.yml',
+     'private_image': False},
 
     {'chart_name': 'nalkinscloud-nginx',
      'helm_repo_name': 'nalkinscloud/nalkinscloud-nginx',
      'name_space': 'nalkinscloud-nginx',
-     'values_file': 'values_files/nalkinscloud-nginx/values.local.yml'},
+     'values_file': 'values_files/nalkinscloud-nginx/values.local.yml',
+     'private_image': False},
 
     {'chart_name': 'jenkins',
      'helm_repo_name': 'stable/jenkins',
      'name_space': 'jenkins',
-     'values_file': 'values_files/jenkins/values.local.yml'},
+     'values_file': 'values_files/jenkins/values.local.yml',
+     'private_image': False},
 ]
+
+docker_registry = ''
+docker_username = ''
+docker_password = ''
 
 
 def identify_installed_helm_repos(return_only_decoded_string=False):
@@ -214,12 +222,29 @@ def install_helm_charts(charts_array):
     for deployment in supported_helm_deployments:
         # Only if current chart name exists in the input 'charts_array'
         if deployment['chart_name'] in charts_array:
-            completed_process_object = subprocess.run(["helm", "upgrade", deployment['chart_name'],
-                                                       "--install", deployment['helm_repo_name'],
-                                                       "--namespace", deployment['name_space'],
-                                                       "-f", deployment['values_file']],
-                                                      stdout=subprocess.PIPE,
-                                                      stderr=subprocess.PIPE)
+            # In case the deployment uses images from private repository
+            # then install helm chart with setting the docker-registry secret values
+            if deployment['private_image']:
+
+                # TODO At this point, call urwid screen to request docker secrets,
+                # Once input received, continue from this point
+
+                completed_process_object = subprocess.run(["helm", "upgrade", deployment['chart_name'],
+                                                           "--install", deployment['helm_repo_name'],
+                                                           "--namespace", deployment['name_space'],
+                                                           "-f", deployment['values_file'],
+                                                           "--set", "secrets.docker.registry=%s" % docker_registry,
+                                                           "--set", "secrets.docker.username=%s" % docker_username,
+                                                           "--set", "secrets.docker.password=%s" % docker_password],
+                                                          stdout=subprocess.PIPE,
+                                                          stderr=subprocess.PIPE)
+            else:
+                completed_process_object = subprocess.run(["helm", "upgrade", deployment['chart_name'],
+                                                           "--install", deployment['helm_repo_name'],
+                                                           "--namespace", deployment['name_space'],
+                                                           "-f", deployment['values_file']],
+                                                          stdout=subprocess.PIPE,
+                                                          stderr=subprocess.PIPE)
             # In case of a non 0 return code, update return from last iteration
             if completed_process_object.returncode != 0:
                 status = completed_process_object.stderr.decode('utf-8')

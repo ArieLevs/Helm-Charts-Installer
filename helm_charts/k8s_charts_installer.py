@@ -53,8 +53,9 @@ def start_urwid():
     text_intro = [('important', u"Helm charts installer "),
                   u"installs kubernetes helm charts on a configured cluster, "
                   u"by default its intended to work on a cluster on the local host. "
-                  u"\nPlease make sure to configure a .kube config file at ",
-                  ('important', u"~/.kube/config.local")]
+                  u"\nFor more details execute 'helm_charts -h'"]
+    config_context_info = [u"Current config file:   ", ('important', config_file),
+                           u"\nCurrent context used:  ", ('important', cluster_context)]
 
     text_repos_divider = [u"Installed ", ('important', u"Helm repositories:")]
 
@@ -102,6 +103,8 @@ def start_urwid():
     listbox_content = [
         blank,
         urwid.Padding(urwid.Text(text_intro), left=2, right=2, min_width=20),
+        blank,
+        urwid.Padding(urwid.Text(config_context_info), left=2, right=2, min_width=20),
 
         urwid.WidgetWrap(urwid.Divider("=", 1)),
         urwid.Padding(urwid.Text(text_charts_divider), left=2, right=2, min_width=20),
