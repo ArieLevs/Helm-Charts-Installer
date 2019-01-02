@@ -13,26 +13,26 @@ nginx:
 configmap:
   nalkinscloudApi:
     serviceName: nalkinscloud-api
-    servicePort: 443
+    servicePort: 80
     namespace: nalkinscloud-api
     serverName: api-alpha.localhost
     staticRoot: /static/nalkinscloud_api/
   nalkinscloudFrontend:
     serviceName: nalkinscloud-frontend
-    servicePort: 443
+    servicePort: 80
     namespace: nalkinscloud-frontend
     serverName: alpha.localhost
     staticRoot: /static/nalkinscloud_frontend/
   nalkinscloudResume:
     serviceName: nalkinscloud-resume
-    servicePort: 443
+    servicePort: 80
     namespace: nalkinscloud-resume
     serverName: resume-alpha.localhost
     staticRoot: /static/nalkinscloud_resume/
 
 service:
   type: ClusterIP
-  port: 443
+  port: 80
 
 ingress:
   enabled: true
@@ -44,7 +44,7 @@ ingress:
     - api-alpha.localhost
     - alpha.localhost
     - resume-alpha.localhost
-  tls: {}
+  tls:
 #    - secretName: nalkins-cloud-tls
 #      hosts:
 #        - api-alpha.nalkins.cloud

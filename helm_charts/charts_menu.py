@@ -1,7 +1,7 @@
 
 import urwid
 from helm_charts.helm_functions import supported_helm_deployments
-from helm_charts.helm_functions import install_helm_charts, delete_helm_installations, identify_installed_helm_charts
+from helm_charts.helm_functions import install_helm_charts, delete_helm_installations
 # from helm_functions import supported_helm_deployments
 # from helm_functions import install_helm_charts, delete_helm_installations
 
