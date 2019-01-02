@@ -8,37 +8,37 @@ supported_helm_deployments = [
     {'chart_name': 'ingress-traefik',
      'helm_repo_name': 'stable/traefik',
      'name_space': 'ingress-traefik',
-     'values_file': values_dir_path + 'ingress-traefik/values.local.yml',
+     'values_file': values_dir_path + 'ingress-traefik.values.local.yml',
      'private_image': False},
 
     {'chart_name': 'kubernetes-dashboard',
      'helm_repo_name': 'stable/kubernetes-dashboard',
      'name_space': 'kube-system',
-     'values_file': values_dir_path + 'kubernetes-dashboard/values.local.yml',
+     'values_file': values_dir_path + 'kubernetes-dashboard.values.local.yml',
      'private_image': False},
 
     {'chart_name': 'nalkinscloud-nginx',
      'helm_repo_name': 'nalkinscloud/nalkinscloud-nginx',
      'name_space': 'nalkinscloud-nginx',
-     'values_file': values_dir_path + 'nalkinscloud-nginx/values.local.yml',
+     'values_file': values_dir_path + 'nalkinscloud-nginx.values.local.yml',
      'private_image': False},
 
     {'chart_name': 'jenkins',
      'helm_repo_name': 'stable/jenkins',
      'name_space': 'jenkins',
-     'values_file': values_dir_path + 'jenkins/values.local.yml',
+     'values_file': values_dir_path + 'jenkins.values.local.yml',
      'private_image': False},
 
     {'chart_name': 'nalkinscloud-frontend',
      'helm_repo_name': 'nalkinscloud/nalkinscloud',
      'name_space': 'nalkinscloud-frontend',
-     'values_file': values_dir_path + 'nalkinscloud/frontend.values.local.yml',
+     'values_file': values_dir_path + 'nalkinscloud.frontend.values.local.yml',
      'private_image': True},
 
     {'chart_name': 'nalkinscloud-api',
      'helm_repo_name': 'nalkinscloud/nalkinscloud',
      'name_space': 'nalkinscloud-api',
-     'values_file': values_dir_path + 'nalkinscloud/api.values.local.yml',
+     'values_file': values_dir_path + 'nalkinscloud.api.values.local.yml',
      'private_image': True},
 ]
 

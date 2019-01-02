@@ -13,6 +13,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/ArieLevs/Helm-Charts-Installer",
     license='Apache License 2.0',
+    include_package_data=True,
     packages=setuptools.find_packages(),
     install_requires=[
         'urwid',
