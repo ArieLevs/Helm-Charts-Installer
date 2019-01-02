@@ -1,0 +1,61 @@
+# Default values for airflow.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+deployment:
+  replicaCount: 1
+  image:
+    privateRepo: true
+    repository: docker.nalkins.cloud/nalkinscloud/nalkinscloud-django-backend
+    tag: latest
+    imagePullPolicy: IfNotPresent
+  env:
+    environment: dev
+    version: null
+    backend_domain: https://api-alpha.localhost
+    frontend_domain: https://alpha.localhost
+    graylog_host:
+    graylog_port:
+    email_host:
+    email_port:
+
+secrets:
+  # If blank, random 50 char secret created
+  django_secret_key:
+
+  docker:
+    dockerSecretName: nalkinscloud-nexus-docker
+    registry: none
+    username: none
+    password: none
+  database:
+    username: django
+    password: django
+  email:
+    username: none
+    password: none
+
+configmap:
+  databaseVars:
+    # Key also used as env name inside project
+    db_name: django
+    db_user: django
+    db_host: centraldb.nalkins.cloud
+
+service:
+  type: ClusterIP
+  port: 443
+
+resources: {}
+  # limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

@@ -42,10 +42,6 @@ supported_helm_deployments = [
      'private_image': True},
 ]
 
-docker_registry = ''
-docker_username = ''
-docker_password = ''
-
 
 def identify_installed_helm_repos(return_only_decoded_string=False):
     """
@@ -216,7 +212,7 @@ def identify_installed_helm_charts(return_only_decoded_string=False):
     return installed_charts
 
 
-def install_helm_charts(charts_array):
+def install_helm_charts(charts_array, docker_registry='', docker_username='', docker_password=''):
     """
     Execute 'helm update' command on input values
     charts_array is an array of strings as:
@@ -227,6 +223,9 @@ def install_helm_charts(charts_array):
     installation process will init only if 'charts_array' has a value that also exists is 'supported_helm_deployments'
 
     :param charts_array: array of strings
+    :param docker_registry: String
+    :param docker_username: String
+    :param docker_password: String
     :return: return code and value from execution command as dict
     """
     # Update helm repo before installation
@@ -240,10 +239,6 @@ def install_helm_charts(charts_array):
             # In case the deployment uses images from private repository
             # then install helm chart with setting the docker-registry secret values
             if deployment['private_image']:
-
-                # TODO At this point, call urwid screen to request docker secrets,
-                # Once input received, continue from this point
-
                 completed_process_object = subprocess.run(["helm", "upgrade", deployment['chart_name'],
                                                            "--install", deployment['helm_repo_name'],
                                                            "--namespace", deployment['name_space'],
