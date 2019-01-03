@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="helm-charts",
-    version="1.0.9",
+    version="1.0.10",
     author="Arie Lev",
     author_email="levinsonarie@gmail.com",
     description="Helm Charts installer",
