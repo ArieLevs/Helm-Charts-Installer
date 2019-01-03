@@ -282,3 +282,54 @@ def delete_helm_installations(charts_array):
             status = completed_process_object.returncode
             value = completed_process_object.stderr.decode('utf-8') + " *** Additional errors may occurred"
     return {'status': status, 'value': value}
+
+
+def identify_charts_in_repo(repository_name, return_only_decoded_string=False):
+    """
+    Execute 'helm repo add' command on input values
+
+    :param repository_name: name of repository as strings
+    :param return_only_decoded_string: if True then return decoded (utf-8) "original" 'helm search' command output
+    :return: return code and value from execution command as dict
+    """
+    # execute and get CompletedProcess object
+    completed_process_object = subprocess.run(["helm", "search", repository_name],
+                                              stdout=subprocess.PIPE,
+                                              stderr=subprocess.PIPE)
+    return_code = completed_process_object.returncode
+    if return_code != 0:
+        return {'status': return_code,
+                'value': completed_process_object.stderr.decode('utf-8').strip()}
+    else:
+        if return_only_decoded_string:
+            return {'status': return_code,
+                    'value': completed_process_object.stdout.decode('utf-8').strip()}
+
+        # get stdout from completed_process_object, and decode for 'utf-8'
+        # split stdout of completed_process_object by 'new line'
+        search_repos_stdout = completed_process_object.stdout.decode('utf-8').split("\n")
+
+        # Perform validation on stdout of first (0) line
+        first_line_stdout = search_repos_stdout[0].split("\t")
+        if first_line_stdout[0].strip() != 'NAME' or first_line_stdout[3].strip() != 'DESCRIPTION':
+            raise Exception("'helm search' command output changed, "
+                            "code change is needed to resolve this issue, "
+                            "contact the developer.")
+
+        charts_list = []
+        # for every line in search repo output, excluding the headers line (NAME, CHART VERSION etc)
+        for line in search_repos_stdout[1:]:
+            # each stdout 'helm search' line composed by tabs delimiter, split it
+            chart_details = line.split("\t")
+
+            temp_dictionary = {}
+            if chart_details[0] != "":
+                # Add current line chart values to dict
+                temp_dictionary.update({'chart_name': chart_details[0].strip()})
+                temp_dictionary.update({'chart_version': chart_details[1].strip()})
+                temp_dictionary.update({'app_version': chart_details[2].strip()})
+                temp_dictionary.update({'description': chart_details[3].strip()})
+                # Update final array with the temp array of dicts of current charts
+                charts_list.append(temp_dictionary)
+
+    return {'status': return_code, 'value': charts_list}
