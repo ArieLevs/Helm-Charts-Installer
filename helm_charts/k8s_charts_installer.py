@@ -8,12 +8,12 @@ from helm_charts.helm_functions import *
 from helm_charts.init_checks import init_checks
 from helm_charts.kubectl_functions import *
 from helm_charts.helper import *
-from helm_charts.sub_menus import InstallChartsMenu, DeleteChartsMenu, DeleteReposMenu
+from helm_charts.sub_menus import InstallChartsMenu, DeleteChartsMenu, DeleteReposMenu, AddRepoMenu
 # from helm_functions import *
 # from init_checks import init_checks
 # from kubectl_functions import *
 # from helper import *
-# from sub_menus import InstallChartsMenu, DeleteChartsMenu, DeleteReposMenu
+# from sub_menus import InstallChartsMenu, DeleteChartsMenu, DeleteReposMenu, AddRepoMenu
 
 config_file = str(Path.home()) + "/.kube/config"
 cluster_context = "docker-for-desktop"
@@ -34,11 +34,11 @@ class MainView(urwid.WidgetPlaceholder):
 
         self.helm_repo_installed_repositories_text = urwid.Text(
             identify_installed_helm_repos(return_only_decoded_string=True).replace("\t", "    "))
+        self.selection_ch_box = [urwid.CheckBox("")
+                                 for repo in identify_installed_helm_repos()]
 
         self.text_helm_charts_installation_result = urwid.Text(u"", align='left')
 
-        self.helm_repo_name_edit_box = urwid.Edit(('editcp', u"Helm repo name "), "set name", align='left', )
-        self.helm_repo_url_edit_box = urwid.Edit(('editcp', u"Helm repo URL  "), "set url", align='left', )
         self.helm_repo_change_result = urwid.Text('')
 
         self.text_helm_charts_installed = urwid.Text(
@@ -66,12 +66,12 @@ class MainView(urwid.WidgetPlaceholder):
             urwid.Padding(urwid.GridFlow(
                 [urwid.AttrWrap(urwid.Button("Install Charts", self.on_chart_install_open), 'buttn', 'buttnf')],
                 18, 3, 1, 'left'),
-                left=4, right=3, min_width=13),
+                left=2, right=2, min_width=13),
             blank,
             urwid.Padding(urwid.GridFlow(
                 [urwid.AttrWrap(urwid.Button("Delete Charts", self.on_chart_delete_open), 'buttn', 'buttnf')],
                 18, 3, 1, 'left'),
-                left=4, right=3, min_width=13),
+                left=2, right=2, min_width=13),
             blank,
             # Print results of charts installations
             urwid.Padding(self.text_helm_charts_installation_result, left=2, right=2, min_width=20),
@@ -83,12 +83,9 @@ class MainView(urwid.WidgetPlaceholder):
             asterisk_divider,
             urwid.Padding(self.helm_repo_installed_repositories_text, left=2, right=2, min_width=20),
             blank,
-            urwid.Padding(urwid.AttrWrap(self.helm_repo_name_edit_box, 'editbx', 'editfc'), left=2, right=2),
-            urwid.Padding(urwid.AttrWrap(self.helm_repo_url_edit_box, 'editbx', 'editfc'), left=2, right=2),
-            blank,
             urwid.Padding(
                 urwid.AttrWrap(
-                    urwid.Button("Add repository", self.add_repo_button_pressed), 'buttn', 'buttnf'),
+                    urwid.Button("Add repository", self.on_add_repo_menu_open), 'buttn', 'buttnf'),
                 left=2, right=2, width=18),
             blank,
             urwid.Padding(
@@ -113,27 +110,27 @@ class MainView(urwid.WidgetPlaceholder):
         self.frame.footer = urwid.AttrWrap(urwid.Text(
             [u"Pressed: ", button.get_label()]), 'header')
 
-    def add_repo_button_pressed(self, button):
+    def on_add_repo_menu_closed(self, refresh_added_repo=False, add_helm_repo_output=None):
+        if refresh_added_repo:
+            # Reset the installed repos text area
+            self.helm_repo_installed_repositories_text.set_text(
+                identify_installed_helm_repos(return_only_decoded_string=True).replace("\t", "    ")
+            )
+            # Print output from 'add repo' function
+            self.helm_repo_change_result.set_text(add_helm_repo_output)
+        self.original_widget = self.frame
+
+    def on_add_repo_menu_open(self, w):
         """
         Execute once 'Add repository' button pressed,
-        init the 'add_helm_repo' function,
-        update the 'text_helm_repo_installed_repositories' urwid.TEXT object
-        and update 'helm_repo_change_result' urwid.TEXT object
+        init the 'InstallChartsMenu' class, and perform an overlay to that class
 
-        :param button:
+        :param w:
         :return:
         """
-
-        # Execute the 'add repo' function with relevant values, and get the 'value' return from function
-        add_helm_repo_output = add_helm_repo(self.helm_repo_name_edit_box.edit_text,
-                                             self.helm_repo_url_edit_box.edit_text)['value']
-
-        # Reset the installed repos text area
-        self.helm_repo_installed_repositories_text.set_text(
-            identify_installed_helm_repos(return_only_decoded_string=True).replace("\t", "    ")
-        )
-        # Print output from 'add repo' function
-        self.helm_repo_change_result.set_text(add_helm_repo_output)
+        add_repo_menu = AddRepoMenu(self.on_add_repo_menu_closed)
+        self.original_widget = urwid.Overlay(add_repo_menu.main_window, self.original_widget,
+                                             align='center', width=120, valign='middle', height=30)
 
     def on_menu_close(self, refresh_installed_charts=False, refresh_installed_repos=False, returned_result=None):
         """Return to main screen"""

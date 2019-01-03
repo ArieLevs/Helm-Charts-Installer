@@ -1,8 +1,9 @@
 
 import urwid
 from helm_charts.helm_functions import supported_helm_deployments, install_helm_charts, \
-    delete_helm_installations, remove_helm_repo
-# from helm_functions import supported_helm_deployments, install_helm_charts, delete_helm_installations, remove_helm_repo
+    delete_helm_installations, remove_helm_repo, add_helm_repo
+# from helm_functions import supported_helm_deployments, install_helm_charts, \
+#     delete_helm_installations, remove_helm_repo, add_helm_repo
 
 docker_registry = ''
 docker_username = ''
@@ -232,3 +233,63 @@ class DeleteReposMenu:
         else:
             result = remove_helm_repo(repos_to_delete)
             self.return_func(refresh_installed_repos=True, returned_result=result)
+
+
+class AddRepoMenu:
+
+    def __init__(self, return_func):
+
+        self.helm_repo_name_edit_box = urwid.Edit(('editcp', u"Helm repo name "), "set name", align='left', )
+        self.helm_repo_url_edit_box = urwid.Edit(('editcp', u"Helm repo URL  "), "set url", align='left', )
+        self.add_repo_result = urwid.Text(u"")
+
+        blank = urwid.Divider()
+        listbox_content = [
+            blank,
+            urwid.WidgetWrap(urwid.Divider("=", 1)),
+            urwid.Padding(urwid.Text(u"Add Helm Repository"), left=2, right=2, min_width=20),
+            urwid.WidgetWrap(urwid.Divider("*", 0, 1)),
+            blank,
+
+            blank,
+            urwid.Padding(urwid.AttrWrap(self.helm_repo_name_edit_box, 'editbx', 'editfc'), left=2, right=2),
+            urwid.Padding(urwid.AttrWrap(self.helm_repo_url_edit_box, 'editbx', 'editfc'), left=2, right=2),
+            blank,
+            urwid.Padding(
+                urwid.GridFlow(
+                    [urwid.AttrWrap(urwid.Button("Cancel", on_press=self.on_cancel), 'buttn', 'buttnf'),
+                     blank,
+                     urwid.AttrWrap(urwid.Button("Add repository", on_press=self.on_add_repo), 'buttn', 'buttnf')
+                     ],
+                    20, 1, 8, 'left'),
+                left=2, right=2, min_width=20, align='left'),
+
+            blank,
+            urwid.Padding(self.add_repo_result, left=2, right=2, min_width=20),
+        ]
+
+        listbox = urwid.ListBox(urwid.SimpleListWalker(listbox_content))
+
+        self.return_func = return_func
+        self.main_window = urwid.LineBox(urwid.AttrWrap(listbox, 'body'))
+
+    def on_cancel(self, w):
+        self.return_func()
+
+    def on_add_repo(self, w):
+        """
+        Execute once 'Add repository' button pressed,
+        init the 'add_helm_repo' function,
+        update the 'text_helm_repo_installed_repositories' urwid.TEXT object
+        and update 'helm_repo_change_result' urwid.TEXT object
+
+        :return:
+        """
+
+        # Execute the 'add repo' function with relevant values, and get the 'value' return from function
+        add_helm_repo_output = add_helm_repo(self.helm_repo_name_edit_box.edit_text,
+                                             self.helm_repo_url_edit_box.edit_text)
+        if add_helm_repo_output['status'] != 0:
+            self.add_repo_result.set_text(add_helm_repo_output['value'])
+        else:
+            return self.return_func(refresh_added_repo=True, add_helm_repo_output=add_helm_repo_output['value'])
