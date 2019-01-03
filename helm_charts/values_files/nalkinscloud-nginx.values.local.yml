@@ -41,8 +41,8 @@ ingress:
     traefik.ingress.kubernetes.io/frontend-entry-points: http, https
   path: /
   hosts:
-    - api-alpha.localhost
-    - alpha.localhost
+    - api.nalkinscloud.localhost
+    - nalkinscloud.localhost
     - resume-alpha.localhost
   tls:
 #    - secretName: nalkins-cloud-tls
