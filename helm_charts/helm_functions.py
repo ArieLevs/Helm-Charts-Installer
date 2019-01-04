@@ -107,48 +107,6 @@ def identify_installed_helm_repos(return_only_decoded_string=False):
     return installed_repos
 
 
-def add_helm_repo(repo_name, repo_url):
-    """
-    Execute 'helm repo add' command on input values
-
-    :param repo_name: name of repository as strings
-    :param repo_url: url of repository as string
-    :return: return code and value from execution command as dict
-    """
-    # execute and get CompletedProcess object
-    completed_process_object = subprocess.run(["helm", "repo", "add", repo_name, repo_url],
-                                              stdout=subprocess.PIPE,
-                                              stderr=subprocess.PIPE)
-    if completed_process_object.returncode == 0:
-        value = completed_process_object.stdout.decode('utf-8')
-    else:
-        value = completed_process_object.stderr.decode('utf-8')
-    return {'status': completed_process_object.returncode, 'value': value}
-
-
-def remove_helm_repo(repos_array):
-    """
-    Execute 'helm repo remove' command on input values
-    repos_array is an array of strings as:
-    ['stable', 'local', 'nalkinscloud', ...]
-
-    :param repos_array: array of strings
-    :return: return code and value from execution command as dict
-    """
-    status = 0
-    value = 'no errors found'
-    for repo in repos_array:
-        completed_process_object = subprocess.run(["helm", "repo", "remove", repo],
-                                                  stdout=subprocess.PIPE,
-                                                  stderr=subprocess.PIPE)
-        # In case of a non 0 return code, update return from last iteration
-        if completed_process_object.returncode != 0:
-            status = completed_process_object.returncode
-            value = completed_process_object.stderr.decode('utf-8') + " *** Additional errors may occurred"
-
-    return {'status': status, 'value': value}
-
-
 def identify_installed_helm_charts(return_only_decoded_string=False):
     """
     Function will perform a manipulation on a string output from the 'helm list' command
@@ -210,78 +168,6 @@ def identify_installed_helm_charts(return_only_decoded_string=False):
                 installed_charts.append(temp_dictionary)
 
     return installed_charts
-
-
-def install_helm_charts(charts_array, docker_registry='', docker_username='', docker_password=''):
-    """
-    Execute 'helm update' command on input values
-    charts_array is an array of strings as:
-    ['ingress-traefik', 'kubernetes-dashboard', ...]
-
-    installation process will iterate over the 'supported_helm_deployments' variable,
-    which contains an array of dicts with all supported helm charts deployments,
-    installation process will init only if 'charts_array' has a value that also exists is 'supported_helm_deployments'
-
-    :param charts_array: array of strings
-    :param docker_registry: String
-    :param docker_username: String
-    :param docker_password: String
-    :return: return code and value from execution command as dict
-    """
-    # Update helm repo before installation
-    subprocess.run(["helm", "repo", "update"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-    status = 0
-    value = 'no errors found'
-    for deployment in supported_helm_deployments:
-        # Only if current chart name exists in the input 'charts_array'
-        if deployment['chart_name'] in charts_array:
-            # In case the deployment uses images from private repository
-            # then install helm chart with setting the docker-registry secret values
-            if deployment['private_image']:
-                completed_process_object = subprocess.run(["helm", "upgrade", deployment['chart_name'],
-                                                           "--install", deployment['helm_repo_name'],
-                                                           "--namespace", deployment['name_space'],
-                                                           "-f", deployment['values_file'],
-                                                           "--set", "secrets.docker.registry=%s" % docker_registry,
-                                                           "--set", "secrets.docker.username=%s" % docker_username,
-                                                           "--set", "secrets.docker.password=%s" % docker_password],
-                                                          stdout=subprocess.PIPE,
-                                                          stderr=subprocess.PIPE)
-            else:
-                completed_process_object = subprocess.run(["helm", "upgrade", deployment['chart_name'],
-                                                           "--install", deployment['helm_repo_name'],
-                                                           "--namespace", deployment['name_space'],
-                                                           "-f", deployment['values_file']],
-                                                          stdout=subprocess.PIPE,
-                                                          stderr=subprocess.PIPE)
-            # In case of a non 0 return code, update return from last iteration
-            if completed_process_object.returncode != 0:
-                status = completed_process_object.returncode
-                value = completed_process_object.stderr.decode('utf-8') + " *** Additional errors may occurred"
-    return {'status': status, 'value': value}
-
-
-def delete_helm_installations(charts_array):
-    """
-    Execute 'helm delete' command on input values
-    charts_array is an array of strings as:
-    ['ingress-traefik', 'kubernetes-dashboard', ...]
-
-    :param charts_array: array of strings
-    :return: return code and value from execution command as dict
-    """
-    status = 0
-    value = 'no errors found'
-    for installation in charts_array:
-        completed_process_object = subprocess.run(["helm", "delete", "--purge", installation],
-                                                  stdout=subprocess.PIPE,
-                                                  stderr=subprocess.PIPE)
-        # In case of a non 0 return code, update return from last iteration
-        if completed_process_object.returncode != 0:
-            status = completed_process_object.returncode
-            value = completed_process_object.stderr.decode('utf-8') + " *** Additional errors may occurred"
-    return {'status': status, 'value': value}
 
 
 def identify_charts_in_repo(repository_name, return_only_decoded_string=False):

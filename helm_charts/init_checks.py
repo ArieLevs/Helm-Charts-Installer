@@ -1,9 +1,9 @@
 
-import subprocess
 import os
 import sys
 import shutil
 from pathlib import Path
+from subprocess import run, PIPE
 
 
 def init_checks(config_file, cluster_context, execute_helm_init=False):
@@ -41,11 +41,8 @@ def init_checks(config_file, cluster_context, execute_helm_init=False):
 
     print("Config file used: {}\n"
           "Context used: {}".format(config_file, cluster_context))
-    use_context_output = subprocess.run(["kubectl", "config",
-                                         "--kubeconfig", config_file,
-                                         "use-context", cluster_context],
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE)
+    use_context_output = run(["kubectl", "config", "--kubeconfig", config_file,
+                              "use-context", cluster_context], stdout=PIPE, stderr=PIPE)
     # In case returncode is not 0
     if use_context_output.returncode:
         print(use_context_output.stderr.decode('utf-8') +
@@ -55,9 +52,7 @@ def init_checks(config_file, cluster_context, execute_helm_init=False):
 
     # .run return CompletedProcess with returncode and stdout and stderr values as bytes object, using UTF-8 decode
     print("Retrieving cluster information")
-    cluster_info_output = subprocess.run(["kubectl", "cluster-info"],
-                                         stdout=subprocess.PIPE,
-                                         stderr=subprocess.PIPE)
+    cluster_info_output = run(["kubectl", "cluster-info"], stdout=PIPE, stderr=PIPE)
 
     # In case returncode is not 0
     if cluster_info_output.returncode:
@@ -75,9 +70,7 @@ def init_checks(config_file, cluster_context, execute_helm_init=False):
 
     if execute_helm_init:
         print("Executing 'helm init' command")
-        helm_init_output = subprocess.run(["helm", "init"],
-                                          stdout=subprocess.PIPE,
-                                          stderr=subprocess.PIPE)
+        helm_init_output = run(["helm", "init"], stdout=PIPE, stderr=PIPE)
         # In case returncode is not 0
         if helm_init_output.returncode:
             print(helm_init_output.stderr.decode('utf-8'))

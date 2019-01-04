@@ -8,12 +8,18 @@ from helm_charts.helm_functions import *
 from helm_charts.init_checks import init_checks
 from helm_charts.kubectl_functions import *
 from helm_charts.helper import *
-from helm_charts.sub_menus import InstallChartsMenu, DeleteChartsMenu, DeleteReposMenu, AddRepoMenu
+from helm_charts.menu_install_charts import InstallChartsMenu
+from helm_charts.menu_delete_charts import DeleteChartsMenu
+from helm_charts.menu_delete_repos import DeleteReposMenu
+from helm_charts.menu_install_repo import AddRepoMenu
 # from helm_functions import *
 # from init_checks import init_checks
 # from kubectl_functions import *
 # from helper import *
-# from sub_menus import InstallChartsMenu, DeleteChartsMenu, DeleteReposMenu, AddRepoMenu
+# from menu_install_charts import InstallChartsMenu
+# from menu_delete_charts import DeleteChartsMenu
+# from menu_delete_repos import DeleteReposMenu
+# from menu_install_repo import AddRepoMenu
 
 config_file = str(Path.home()) + "/.kube/config"
 cluster_context = "docker-for-desktop"
@@ -34,8 +40,6 @@ class MainView(urwid.WidgetPlaceholder):
 
         self.helm_repo_installed_repositories_text = urwid.Text(
             identify_installed_helm_repos(return_only_decoded_string=True).replace("\t", "    "))
-        self.selection_ch_box = [urwid.CheckBox("")
-                                 for repo in identify_installed_helm_repos()]
 
         self.text_helm_charts_installation_result = urwid.Text(u"", align='left')
 
@@ -85,13 +89,13 @@ class MainView(urwid.WidgetPlaceholder):
             blank,
             urwid.Padding(
                 urwid.AttrWrap(
-                    urwid.Button("Add repository", self.on_add_repo_menu_open), 'buttn', 'buttnf'),
-                left=2, right=2, width=18),
+                    urwid.Button("Add repository", self.on_repo_add_menu_open), 'buttn', 'buttnf'),
+                left=2, right=2, width=25),
             blank,
             urwid.Padding(
                 urwid.AttrWrap(
-                    urwid.Button("Delete repositories", self.delete_repos_button_pressed), 'buttn', 'buttnf'),
-                left=2, right=2, width=18),
+                    urwid.Button("Delete repositories", self.on_repo_delete_menu_open), 'buttn', 'buttnf'),
+                left=2, right=2, width=25),
             blank,
             # Print result from helm repo add
             urwid.Padding(self.helm_repo_change_result, left=2, right=2, min_width=20),
@@ -110,57 +114,6 @@ class MainView(urwid.WidgetPlaceholder):
         self.frame.footer = urwid.AttrWrap(urwid.Text(
             [u"Pressed: ", button.get_label()]), 'header')
 
-    def on_add_repo_menu_closed(self, refresh_added_repo=False, add_helm_repo_output=None):
-        if refresh_added_repo:
-            # Reset the installed repos text area
-            self.helm_repo_installed_repositories_text.set_text(
-                identify_installed_helm_repos(return_only_decoded_string=True).replace("\t", "    ")
-            )
-            # Print output from 'add repo' function
-            self.helm_repo_change_result.set_text(add_helm_repo_output)
-        self.original_widget = self.frame
-
-    def on_add_repo_menu_open(self, w):
-        """
-        Execute once 'Add repository' button pressed,
-        init the 'InstallChartsMenu' class, and perform an overlay to that class
-
-        :param w:
-        :return:
-        """
-        add_repo_menu = AddRepoMenu(self.on_add_repo_menu_closed)
-        self.original_widget = urwid.Overlay(add_repo_menu.main_window, self.original_widget,
-                                             align='center', width=120, valign='middle', height=30)
-
-    def on_menu_close(self, refresh_installed_charts=False, refresh_installed_repos=False, returned_result=None):
-        """Return to main screen"""
-        # refresh_installed_charts parameter is checked to determine if installed charts text needs update
-        # This is done some multiple functions can return to main menu, but not all should trigger different checks
-        if refresh_installed_charts:
-            self.text_helm_charts_installed.set_text(
-                identify_installed_helm_charts(return_only_decoded_string=True).replace("\t", "    ")
-            )
-            # If this function returned with some result
-            if returned_result is not None and 'status' in returned_result:
-                # In case there where no errors print nothing
-                if returned_result['status'] == 0:
-                    self.text_helm_charts_installation_result.set_text(u"")
-                else:
-                    self.text_helm_charts_installation_result.set_text(("errors", returned_result['value']))
-        if refresh_installed_repos:
-            self.helm_repo_installed_repositories_text.set_text(
-                identify_installed_helm_repos(return_only_decoded_string=True).replace("\t", "    ")
-            )
-            # If this function returned with some result
-            if returned_result is not None and 'status' in returned_result:
-                # In case there where no errors print nothing
-                if returned_result['status'] == 0:
-                    self.helm_repo_change_result.set_text(u"")
-                else:
-                    self.helm_repo_change_result.set_text(("errors", returned_result['value']))
-
-        self.original_widget = self.frame
-
     def on_chart_install_open(self, w):
         """
         Execute once 'Install Charts' button pressed,
@@ -169,7 +122,7 @@ class MainView(urwid.WidgetPlaceholder):
         :param w:
         :return:
         """
-        install_charts_menu = InstallChartsMenu(self.on_menu_close)
+        install_charts_menu = InstallChartsMenu(self.on_charts_menu_close, supported_helm_deployments)
         self.original_widget = urwid.Overlay(install_charts_menu.main_window, self.original_widget,
                                              align='center', width=120, valign='middle', height=30)
 
@@ -181,14 +134,55 @@ class MainView(urwid.WidgetPlaceholder):
         :param w:
         :return:
         """
-        delete_charts_menu = DeleteChartsMenu(self.on_menu_close, identify_installed_helm_charts())
+        delete_charts_menu = DeleteChartsMenu(self.on_charts_menu_close, identify_installed_helm_charts())
         self.original_widget = urwid.Overlay(delete_charts_menu.main_window, self.original_widget,
                                              align='center', width=120, valign='middle', height=30)
 
-    def delete_repos_button_pressed(self, button):
-        delete_repos_menus = DeleteReposMenu(self.on_menu_close, identify_installed_helm_repos())
+    def on_charts_menu_close(self, refresh_installed_charts=False, returned_result=None):
+        # refresh_installed_charts parameter is checked to determine if installed charts text needs update
+        if refresh_installed_charts:
+            self.text_helm_charts_installed.set_text(
+                identify_installed_helm_charts(return_only_decoded_string=True).replace("\t", "    ")
+            )
+            # If this function returned with some result
+            if returned_result is not None and 'status' in returned_result:
+                # In case there where no errors print nothing
+                if returned_result['status'] == 0:
+                    self.text_helm_charts_installation_result.set_text(u"")
+                else:
+                    self.text_helm_charts_installation_result.set_text(("errors", returned_result['value']))
+        self.original_widget = self.frame
+
+    def on_repo_add_menu_open(self, w):
+        """
+        Execute once 'Add repository' button pressed,
+        init the 'InstallChartsMenu' class, and perform an overlay to that class
+
+        :param w:
+        :return:
+        """
+        add_repo_menu = AddRepoMenu(self.on_repos_menu_closed)
+        self.original_widget = urwid.Overlay(add_repo_menu.main_window, self.original_widget,
+                                             align='center', width=120, valign='middle', height=30)
+
+    def on_repo_delete_menu_open(self, button):
+        delete_repos_menus = DeleteReposMenu(self.on_repos_menu_closed, identify_installed_helm_repos())
         self.original_widget = urwid.Overlay(delete_repos_menus.main_window, self.original_widget,
                                              align='center', width=120, valign='middle', height=30)
+
+    def on_repos_menu_closed(self, refresh_installed_repos=False, returned_result=None):
+        if refresh_installed_repos:
+            # Reset the installed repos text area
+            self.helm_repo_installed_repositories_text.set_text(
+                identify_installed_helm_repos(return_only_decoded_string=True).replace("\t", "    ")
+            )
+            if returned_result is not None and 'status' in returned_result:
+                # In case there where no errors print nothing
+                if returned_result['status'] == 0:
+                    self.helm_repo_change_result.set_text(u"")
+                else:
+                    self.helm_repo_change_result.set_text(("errors", returned_result['value']))
+        self.original_widget = self.frame
 
 
 class HelmInstaller:
