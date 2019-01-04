@@ -120,8 +120,6 @@ class InstallChartsMenu:
         :param charts_array: array of strings
         :return: return code and value from execution command as dict
         """
-        # Update helm repo before installation
-        run(["helm", "repo", "update"], stdout=PIPE, stderr=PIPE)
 
         status = 0
         value = 'no errors found'
