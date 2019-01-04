@@ -1,6 +1,7 @@
 
-import subprocess
 import os
+from subprocess import run, PIPE
+
 
 values_dir_path = os.path.dirname(os.path.realpath(__file__)) + '/values_files/'
 
@@ -65,9 +66,7 @@ def identify_installed_helm_repos(return_only_decoded_string=False):
     :return: array of dicts with repo installations
     """
     # Execute 'helm list' command, returned as CompletedProcess
-    installed_repos_completed_process = subprocess.run(["helm", "repo", "list"],
-                                                       stdout=subprocess.PIPE,
-                                                       stderr=subprocess.PIPE)
+    installed_repos_completed_process = run(["helm", "repo", "list"], stdout=PIPE, stderr=PIPE)
 
     if return_only_decoded_string:
         if installed_repos_completed_process.returncode == 0:
@@ -128,29 +127,27 @@ def identify_installed_helm_charts(return_only_decoded_string=False):
     :return: array of dicts with helm installations
     """
     # Execute 'helm list' command, returned as CompletedProcess
-    installed_helm_completed_process = subprocess.run(["helm", "list"],
-                                                      stdout=subprocess.PIPE,
-                                                      stderr=subprocess.PIPE)
+    installed_helm_completed_process = run(["helm", "list"], stdout=PIPE, stderr=PIPE)
 
+    status = installed_helm_completed_process.returncode
     if return_only_decoded_string:
-        if installed_helm_completed_process.returncode == 0:
-            value = installed_helm_completed_process.stdout.decode('utf-8').strip()
+        if status == 0:
+            return {'status': status, 'value': installed_helm_completed_process.stdout.decode('utf-8').strip()}
         else:
-            value = installed_helm_completed_process.stderr.decode('utf-8').strip()
-        return value
+            return {'status': status, 'value': installed_helm_completed_process.stderr.decode('utf-8').strip()}
 
     installed_charts = []
 
     # In case returncode is 0
-    if not installed_helm_completed_process.returncode:
+    if not status:
         # get stdout from installed_helm_completed_process, and decode for 'utf-8'
         # split stdout of installed_helm_completed_process by 'new line'
         installed_helm_stdout = installed_helm_completed_process.stdout.decode('utf-8').split("\n")
 
         # Perform validation on stdout of first (0) line
         first_line_stdout = installed_helm_stdout[0].split("\t")
-        if first_line_stdout[0].strip() != 'NAME' or first_line_stdout[5].strip() != 'NAMESPACE':
-            raise Exception("'helm list' command output changed, "
+        if first_line_stdout[0].strip() != 'NAME' or first_line_stdout[6].strip() != 'NAMESPACE':
+            raise Exception("'helm list' command output changed, probably due to helm version update, "
                             "code change is needed to resolve this issue, "
                             "contact the developer.")
 
@@ -163,11 +160,11 @@ def identify_installed_helm_charts(return_only_decoded_string=False):
             if chart_details[0] != "":
                 # Add current line chart values to dict
                 temp_dictionary.update({'chart_name': chart_details[0].strip()})
-                temp_dictionary.update({'name_space': chart_details[5].strip()})
+                temp_dictionary.update({'name_space': chart_details[6].strip()})
                 # Update final array with the temp array of dicts of current helm deployment
                 installed_charts.append(temp_dictionary)
 
-    return installed_charts
+    return {'status': status, 'value': installed_charts}
 
 
 def identify_charts_in_repo(repository_name, return_only_decoded_string=False):
@@ -178,10 +175,16 @@ def identify_charts_in_repo(repository_name, return_only_decoded_string=False):
     :param return_only_decoded_string: if True then return decoded (utf-8) "original" 'helm search' command output
     :return: return code and value from execution command as dict
     """
+
+    # Update helm repo before installation
+    # --strict will fail on update warnings
+    completed_process_object = run(["helm", "repo", "update", "--strict"], stdout=PIPE, stderr=PIPE)
+    if completed_process_object.returncode != 0:
+        return {'status': completed_process_object.returncode,
+                'value': completed_process_object.stderr.decode('utf-8').strip()}
+
     # execute and get CompletedProcess object
-    completed_process_object = subprocess.run(["helm", "search", repository_name],
-                                              stdout=subprocess.PIPE,
-                                              stderr=subprocess.PIPE)
+    completed_process_object = run(["helm", "search", repository_name], stdout=PIPE, stderr=PIPE)
     return_code = completed_process_object.returncode
     if return_code != 0:
         return {'status': return_code,
