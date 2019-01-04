@@ -48,9 +48,35 @@ Examples
 **set** cluster context, default context is: `docker-for-desktop`  
 `helm_charts --use-context CONTEXT_NAME`
 
+**set** custom charts installation file:  
+`helm_charts --supported-charts-file PATH_TO_FILE`  
+for detail see below
+
 also **Executes** 'helm init' command  
 `helm_charts --helm-init`
 
+Custom Charts File
+------------------
+if using the `--supported-charts-file` flag,  
+file structure **must** be as:
+```yaml
+
+- chart_name: ingress-traefik
+  helm_repo_name: stable/traefik
+  name_space: ingress-traefik
+  values_file: ingress-traefik.values.local.yml
+  private_image: False
+
+- chart_name: chart_name_to_install
+  helm_repo_name: my_private_repo/some-chart
+  name_space: kube-system
+  values_file: kubernetes-dashboard.values.local.yml
+  private_image: False
+
+...
+```
+`values_file` file **must** be present in the same directory,  
+all keys **must** be strings, and `private_image` **must** be boolean
 
 Access Kubernetes Dashboard
 ---------------------------
@@ -58,5 +84,6 @@ Access Kubernetes Dashboard
 If `kubernetes_dashboard` selected during installation process,
 In order to login, access https://kubernetes.localhost
 Press `Choose kubeconfig file` or `...` on right side,  
-Select `~/.kube/config.local` file and press `SIGN IN`
+Select `~/.kube/config` file and press `SIGN IN`.  
+Also possible to choose `SKIP` as local installation allow this
 ![](docs/kubernetes_dashboard.png)
