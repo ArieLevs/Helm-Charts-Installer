@@ -68,6 +68,12 @@ def init_checks(config_file, cluster_context, execute_helm_init=False):
               "Make sure 'helm' installed: https://docs.helm.sh/using_helm/#installing-helm")
         exit(1)
 
+    helm_version_output = run(["helm", "version"], stdout=PIPE, stderr=PIPE)
+    if helm_version_output.returncode:
+        print(helm_version_output.stderr.decode('utf-8') +
+              "Please fix helm first, consider executing this app with --helm-init flag")
+        exit(1)
+
     if execute_helm_init:
         print("Executing 'helm init' command")
         helm_init_output = run(["helm", "init"], stdout=PIPE, stderr=PIPE)
