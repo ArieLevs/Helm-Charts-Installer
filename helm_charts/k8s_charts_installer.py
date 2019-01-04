@@ -3,6 +3,7 @@ import argparse
 import urwid
 import urwid.raw_display
 import urwid.web_display
+import yaml
 from pathlib import Path
 from helm_charts.helm_functions import *
 from helm_charts.init_checks import init_checks
@@ -122,7 +123,7 @@ class MainView(urwid.WidgetPlaceholder):
         :param w:
         :return:
         """
-        install_charts_menu = InstallChartsMenu(self.on_charts_menu_close, supported_helm_deployments)
+        install_charts_menu = InstallChartsMenu(self.on_charts_menu_close, supported_helm_deployments, values_dir_path)
         self.original_widget = urwid.Overlay(install_charts_menu.main_window, self.original_widget,
                                              align='center', width=120, valign='middle', height=30)
 
@@ -226,6 +227,8 @@ def main():
                                               'Default is `{}`'.format(config_file), required=False)
     parser.add_argument('--use-context', help='Cluster context name to use, '
                                               'Default is `{}`'.format(cluster_context), required=False)
+    parser.add_argument('--supported-charts-file', help='Path to supported charts .yaml file, '
+                                                        'If specified, default charts override', required=False)
     parser.add_argument('--helm-init', action='store_true', help='Perform "helm init" on cluster', required=False)
 
     args = vars(parser.parse_args())
@@ -235,6 +238,28 @@ def main():
 
     if args['use_context'] is not None:
         cluster_context = args['use_context']
+
+    supported_charts_file = args['supported_charts_file']
+    if supported_charts_file is not None:
+        charts_yaml = {}
+        with open(supported_charts_file, 'r') as stream:
+            filename, file_extension = os.path.splitext(supported_charts_file)
+
+            if file_extension == '.yaml' or file_extension == '.yml':
+                try:
+                    charts_yaml = yaml.load(stream)
+                except yaml.YAMLError as exc:
+                    print("Input file is not valid: {0}".format(exc))
+                    exit(1)
+
+                if is_valid_charts_yaml(charts_yaml):
+                    global supported_helm_deployments, values_dir_path
+                    supported_helm_deployments = charts_yaml
+                    values_dir_path = os.path.dirname(supported_charts_file) + "/"
+                else:
+                    raise ValueError("Input file is not valid: \n{0}".format(yaml.dump(charts_yaml)))
+            else:
+                raise ValueError("File extension is not known to this app: {0}".format(file_extension))
 
     print("Starting application, please wait...")
     init_checks(config_file, cluster_context, args['helm_init'])

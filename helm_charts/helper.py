@@ -7,6 +7,32 @@ def remove_ansi_color_from_string(input_string):
     return ansi_escape.sub('', input_string)
 
 
+def is_valid_charts_yaml(content):
+    """
+    Check if 'content' contains mandatory keys
+
+    :param content: parsed YAML file as list of dictionary of key values
+    :return: True if dict contains mandatory values, else False
+    """
+
+    # Iterate on each list cell
+    for chart_details in content:
+        # If one of the keys is missing or, is None
+        if not all(chart_details.get(x) is not None
+                   and x in chart_details
+                   for x in ['chart_name', 'helm_repo_name', 'name_space', 'values_file', 'private_image']):
+            return False
+        # If one of the keys is not a string
+        if not all(type(chart_details.get(x)) is str
+                   for x in ['chart_name', 'helm_repo_name', 'name_space', 'values_file']):
+            return False
+        # If one of the keys is not a boolean
+        if not all(type(chart_details.get(x)) is bool
+                   for x in ['private_image']):
+            return False
+    return True
+
+
 main_palette = [
     ('body', 'black', 'light gray', 'standout'),
     ('reverse', 'light gray', 'black'),

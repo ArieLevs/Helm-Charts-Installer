@@ -17,6 +17,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     install_requires=[
         'urwid',
+        'pyyaml',
       ],
     classifiers=(
         "Programming Language :: Python :: 3",

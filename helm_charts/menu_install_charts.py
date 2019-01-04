@@ -5,9 +5,10 @@ from subprocess import run, PIPE
 
 class InstallChartsMenu:
 
-    def __init__(self, return_func, charts_dict_list):
+    def __init__(self, return_func, charts_dict_list, values_dir_path):
 
         self.charts_dict_list = charts_dict_list
+        self.values_dir_path = values_dir_path
 
         self.docker_registry = ''
         self.docker_username = ''
@@ -82,26 +83,27 @@ class InstallChartsMenu:
 
     def on_install(self, w):
         charts_to_install = []
-        for index, chart in enumerate(self.selection_ch_box):
-            if chart.get_state():
-                # split() without arguments splits on whitespace, get first cell of split
-                charts_to_install.append(chart.label.split()[0])
+        # Iterate over all check boxes
+        for selection in self.selection_ch_box:
+            # If current check box selected (True)
+            if selection.get_state():
+                # Iterate over charts_dict_list (supported_helm_deployments)
+                for supported_chart_deployment in self.charts_dict_list:
+                    # If selected label exists in supported_chart_deployment
+                    if selection.label.split()[0] in supported_chart_deployment['chart_name']:
+                        charts_to_install.append(supported_chart_deployment)
 
-                # TODO un bind the dependence between charts_dict_list and selection_ch_box
-                # Since selection_ch_box is built from charts_dict_list,
-                # they share same values on same indexes
-                if self.charts_dict_list[index]['private_image']:
+                        if supported_chart_deployment['private_image']:
+                            self.docker_registry = self.docker_registry_edit_box.edit_text
+                            self.docker_username = self.docker_username_edit_box.edit_text
+                            self.docker_password = self.docker_password_edit_box.edit_text
 
-                    self.docker_registry = self.docker_registry_edit_box.edit_text
-                    self.docker_username = self.docker_username_edit_box.edit_text
-                    self.docker_password = self.docker_password_edit_box.edit_text
-
-                    if self.docker_registry == '' or self.docker_username == '' or self.docker_password == '':
-                        self.text_installation_result.set_text(
-                            u"One or more of the selected helm chart require docker-registry-secret, "
-                            u"All fields must be filled"
-                        )
-                        return
+                            if self.docker_registry == '' or self.docker_username == '' or self.docker_password == '':
+                                self.text_installation_result.set_text(
+                                    u"One or more of the selected helm chart require docker-registry-secret, "
+                                    u"All fields must be filled"
+                                )
+                                return
 
         # If the array remained empty
         if not charts_to_install:
@@ -111,13 +113,19 @@ class InstallChartsMenu:
             self.return_func(refresh_installed_charts=True, returned_result=result)
         # self.text_installation_result.set_text(u'%s' % result)
 
-    def install_helm_charts(self, charts_array):
+    def install_helm_charts(self, charts_list_dict):
         """
         Execute 'helm update' command on input values
-        charts_array is an array of strings as:
-        ['ingress-traefik', 'kubernetes-dashboard', ...]
+        charts_list_dict is a list of dicts as:
+        [
+            {'chart_name': 'ingress-traefik',
+            'helm_repo_name': 'stable/traefik',
+            'name_space': 'ingress-traefik',
+            'values_file': 'ingress-traefik.values.local.yml',
+            'private_image': False},
+        ]
 
-        :param charts_array: array of strings
+        :param charts_list_dict: list of dicts
         :return: return code and value from execution command as dict
         """
 
@@ -134,30 +142,28 @@ class InstallChartsMenu:
 
         status = 0
         value = 'no errors found'
-        for deployment in self.charts_dict_list:
-            # Only if current chart name exists in the input 'charts_array'
-            if deployment['chart_name'] in charts_array:
-                # In case the deployment uses images from private repository
-                # then install helm chart with setting the docker-registry secret values
-                if deployment['private_image']:
-                    completed_process_object = run(["helm", "upgrade", deployment['chart_name'],
-                                                    "--install", deployment['helm_repo_name'],
-                                                    "--namespace", deployment['name_space'],
-                                                    "-f", deployment['values_file'],
-                                                    "--set", "secrets.docker.registry=%s" % self.docker_registry,
-                                                    "--set", "secrets.docker.username=%s" % self.docker_username,
-                                                    "--set", "secrets.docker.password=%s" % self.docker_password],
-                                                   stdout=PIPE,
-                                                   stderr=PIPE)
-                else:
-                    completed_process_object = run(["helm", "upgrade", deployment['chart_name'],
-                                                    "--install", deployment['helm_repo_name'],
-                                                    "--namespace", deployment['name_space'],
-                                                    "-f", deployment['values_file']],
-                                                   stdout=PIPE,
-                                                   stderr=PIPE)
-                # In case of a non 0 return code, update return from last iteration
-                if completed_process_object.returncode != 0:
-                    status = completed_process_object.returncode
-                    value = completed_process_object.stderr.decode('utf-8') + " *** Additional errors may occurred"
+        for deployment in charts_list_dict:
+            # In case the deployment uses images from private repository
+            # then install helm chart with setting the docker-registry secret values
+            if deployment['private_image']:
+                completed_process_object = run(["helm", "upgrade", deployment['chart_name'],
+                                                "--install", deployment['helm_repo_name'],
+                                                "--namespace", deployment['name_space'],
+                                                "-f", self.values_dir_path + deployment['values_file'],
+                                                "--set", "secrets.docker.registry=%s" % self.docker_registry,
+                                                "--set", "secrets.docker.username=%s" % self.docker_username,
+                                                "--set", "secrets.docker.password=%s" % self.docker_password],
+                                               stdout=PIPE,
+                                               stderr=PIPE)
+            else:
+                completed_process_object = run(["helm", "upgrade", deployment['chart_name'],
+                                                "--install", deployment['helm_repo_name'],
+                                                "--namespace", deployment['name_space'],
+                                                "-f", self.values_dir_path + deployment['values_file']],
+                                               stdout=PIPE,
+                                               stderr=PIPE)
+            # In case of a non 0 return code, update return from last iteration
+            if completed_process_object.returncode != 0:
+                status = completed_process_object.returncode
+                value = completed_process_object.stderr.decode('utf-8') + " *** Additional errors may occurred"
         return {'status': status, 'value': value}
