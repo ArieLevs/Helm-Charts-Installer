@@ -121,6 +121,17 @@ class InstallChartsMenu:
         :return: return code and value from execution command as dict
         """
 
+        # Update helm repo before installation
+        # --strict will fail on update warnings
+        # TODO repo update will fail even if one of the repositories returned error,
+        # feature requested at https://github.com/helm/helm/issues/5127
+        # Add '--strict' and '--repo-name' if helm api is updated
+        helm_repo_update_output = run(["helm", "repo", "update"], stdout=PIPE, stderr=PIPE)
+        # If return code in not 0
+        if helm_repo_update_output.returncode:
+            return {'status': helm_repo_update_output.returncode,
+                    'value': helm_repo_update_output.stderr.decode('utf-8').strip()}
+
         status = 0
         value = 'no errors found'
         for deployment in self.charts_dict_list:
