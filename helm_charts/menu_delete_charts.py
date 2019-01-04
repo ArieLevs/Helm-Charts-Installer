@@ -64,8 +64,7 @@ class DeleteChartsMenu:
             self.text_deletion_result.set_text(u"At least one chart must be selected")
         else:
             result = delete_helm_installations(charts_to_delete)
-            self.return_func(True)
-        # self.text_installation_result.set_text(u'%s' % result)
+            self.return_func(refresh_installed_charts=True, returned_result=result)
 
 
 def delete_helm_installations(charts_array):
