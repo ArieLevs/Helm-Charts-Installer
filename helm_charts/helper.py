@@ -30,6 +30,9 @@ def is_valid_charts_yaml(content):
         if not all(type(chart_details.get(x)) is bool
                    for x in ['private_image']):
             return False
+        if not all(type(chart_details.get(x)) is list
+                   for x in ['extra_executes']):
+            return False
     return True
 
 

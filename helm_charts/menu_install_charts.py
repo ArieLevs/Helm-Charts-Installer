@@ -1,6 +1,6 @@
 
 import urwid
-from subprocess import run, PIPE
+from subprocess import run, PIPE, CalledProcessError
 
 
 class InstallChartsMenu:
@@ -143,6 +143,27 @@ class InstallChartsMenu:
         status = 0
         value = 'no errors found'
         for deployment in charts_list_dict:
+            # execute extra commands if any, and are non empty
+            if 'extra_executes' in deployment and deployment['extra_executes']:
+                # Each execution is a command with args as string
+                # Performing split() will create a list separated by spaces
+                for execution in deployment['extra_executes']:
+                    # If array is not None or empty
+                    if execution:
+                        try:
+                            completed_process_object = run(execution.split(),
+                                                           stdout=PIPE,
+                                                           stderr=PIPE)
+
+                            if completed_process_object.returncode != 0:
+                                status = completed_process_object.returncode
+                                value = completed_process_object.stderr.decode(
+                                    'utf-8') + " *** This error occurred part of 'extra_executes' part, " \
+                                               "Please make sure to resolve any error with given commands"
+                                return {'status': status, 'value': value}
+                        except Exception as exc:
+                            return {'status': 1, 'value': str(exc)}
+
             # In case the deployment uses images from private repository
             # then install helm chart with setting the docker-registry secret values
             if deployment['private_image']:

@@ -6,41 +6,79 @@ from subprocess import run, PIPE
 values_dir_path = os.path.dirname(os.path.realpath(__file__)) + '/values_files/'
 
 supported_helm_deployments = [
+    {'chart_name': 'airflow',
+     'helm_repo_name': 'stable/airflow',
+     'name_space': 'airflow',
+     'values_file': 'airflow.values.local.yml',
+     'private_image': False,
+     'extra_executes': []
+     },
+
     {'chart_name': 'ingress-traefik',
      'helm_repo_name': 'stable/traefik',
      'name_space': 'ingress-traefik',
      'values_file': 'ingress-traefik.values.local.yml',
-     'private_image': False},
+     'private_image': False,
+     'extra_executes': []},
 
     {'chart_name': 'kubernetes-dashboard',
      'helm_repo_name': 'stable/kubernetes-dashboard',
      'name_space': 'kube-system',
      'values_file': 'kubernetes-dashboard.values.local.yml',
-     'private_image': False},
+     'private_image': False,
+     'extra_executes': []},
 
     {'chart_name': 'jenkins',
      'helm_repo_name': 'stable/jenkins',
      'name_space': 'jenkins',
      'values_file': 'jenkins.values.local.yml',
-     'private_image': False},
+     'private_image': False,
+     'extra_executes': []},
+
+    {'chart_name': 'openfaas',
+     'helm_repo_name': 'openfaas/openfaas',
+     'name_space': 'openfaas',
+     'values_file': 'openfaas.values.local.yml',
+     'private_image': False,
+     'extra_executes': [
+         '',
+     ]
+     },
+
+    {'chart_name': 'rabbitmq',
+     'helm_repo_name': 'stable/rabbitmq',
+     'name_space': 'rabbitmq',
+     'values_file': 'rabbitmq.values.local.yml',
+     'private_image': False,
+     'extra_executes': []},
+
+    {'chart_name': 'redis',
+     'helm_repo_name': 'stable/redis',
+     'name_space': 'redis',
+     'values_file': 'redis.values.local.yml',
+     'private_image': False,
+     'extra_executes': []},
 
     {'chart_name': 'nalkinscloud-nginx',
      'helm_repo_name': 'nalkinscloud/nalkinscloud-nginx',
      'name_space': 'nalkinscloud-nginx',
      'values_file': 'nalkinscloud-nginx.values.local.yml',
-     'private_image': False},
+     'private_image': False,
+     'extra_executes': []},
 
     {'chart_name': 'nalkinscloud-frontend',
      'helm_repo_name': 'nalkinscloud/nalkinscloud',
      'name_space': 'nalkinscloud-frontend',
      'values_file': 'nalkinscloud.frontend.values.local.yml',
-     'private_image': True},
+     'private_image': True,
+     'extra_executes': []},
 
     {'chart_name': 'nalkinscloud-api',
      'helm_repo_name': 'nalkinscloud/nalkinscloud',
      'name_space': 'nalkinscloud-api',
      'values_file': 'nalkinscloud.api.values.local.yml',
-     'private_image': True},
+     'private_image': True,
+     'extra_executes': []},
 ]
 
 
