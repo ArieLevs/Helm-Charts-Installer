@@ -347,8 +347,8 @@ def main():
     print("Starting application, please wait...")
     init_checks(config_file, cluster_context, args['helm_init'])
 
-    #helm_installer = HelmInstaller()
-    #helm_installer.main()
+    helm_installer = HelmInstaller()
+    helm_installer.main()
 
 
 if __name__ == '__main__':
