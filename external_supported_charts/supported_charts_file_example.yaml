@@ -1,0 +1,9 @@
+
+- chart_name: rabbitmq-ha
+  helm_repo_name: stable/rabbitmq-ha
+  name_space: rabbitmq-ha
+  values_file: rabbitmq-ha.values.local.yml
+  private_image: False
+  #extra_executes:
+  #  - abc: aaa
+  extra_executes: []

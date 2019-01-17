@@ -76,7 +76,7 @@ def init_checks(config_file, cluster_context, execute_helm_init=False):
 
     if execute_helm_init:
         print("Executing 'helm init' command")
-        helm_init_output = run(["helm", "init"], stdout=PIPE, stderr=PIPE)
+        helm_init_output = run(["helm", "init", "--upgrade"], stdout=PIPE, stderr=PIPE)
         # In case returncode is not 0
         if helm_init_output.returncode:
             print(helm_init_output.stderr.decode('utf-8'))

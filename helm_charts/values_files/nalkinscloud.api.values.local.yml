@@ -12,7 +12,7 @@ deployment:
   env:
     environment: dev
     version: null
-    backend_domain: https://api-alpha.localhost
+    backend_domain: https://api.nalkinscloud.localhost
     frontend_domain: https://alpha.localhost
     graylog_host:
     graylog_port:
@@ -44,7 +44,19 @@ configmap:
 
 service:
   type: ClusterIP
-  port: 443
+  port: 80
+
+ingress:
+  enabled: true
+  annotations:
+    kubernetes.io/ingress.class: "traefik"
+  path: /
+  hosts:
+    - api.nalkinscloud.localhost
+  tls: {}
+  #  - secretName: nalkins-cloud-tls
+  #    hosts:
+  #      - nalkins.cloud
 
 resources: {}
   # limits:
