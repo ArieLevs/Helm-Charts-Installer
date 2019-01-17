@@ -13,6 +13,8 @@ from helm_charts.menu_install_charts import InstallChartsMenu
 from helm_charts.menu_delete_charts import DeleteChartsMenu
 from helm_charts.menu_delete_repos import DeleteReposMenu
 from helm_charts.menu_install_repo import AddRepoMenu
+from helm_charts.menu_create_namespace import CreateNamespaceMenu
+from helm_charts.menu_delete_namespace import DeleteNamespacesMenu
 # from helm_functions import *
 # from init_checks import init_checks
 # from kubectl_functions import *
@@ -21,6 +23,8 @@ from helm_charts.menu_install_repo import AddRepoMenu
 # from menu_delete_charts import DeleteChartsMenu
 # from menu_delete_repos import DeleteReposMenu
 # from menu_install_repo import AddRepoMenu
+# from menu_create_namespace import CreateNamespaceMenu
+# from menu_delete_namespace import DeleteNamespacesMenu
 
 config_file = str(Path.home()) + "/.kube/config"
 cluster_context = "docker-for-desktop"
@@ -49,6 +53,10 @@ class MainView(urwid.WidgetPlaceholder):
         self.text_helm_charts_installed = urwid.Text(
             identify_installed_helm_charts()['value'].replace("\t", "    ")
         )
+
+        self.cluster_namespaces_text = urwid.Text(
+            identify_cluster_namespaces()['value'].replace("\t", "    "))
+        self.namespaces_change_result = urwid.Text('')
 
         blank = urwid.Divider()
         equal_divider = urwid.WidgetWrap(urwid.Divider("=", 1))
@@ -81,25 +89,57 @@ class MainView(urwid.WidgetPlaceholder):
             # Print results of charts installations
             urwid.Padding(self.text_helm_charts_installation_result, left=2, right=2, min_width=20),
 
-            # Helm repositories display
-            equal_divider,
-            urwid.Padding(
-                urwid.Text([u"Installed ", ('important', u"Helm repositories:")]), left=2, right=2, min_width=20),
-            asterisk_divider,
-            urwid.Padding(self.helm_repo_installed_repositories_text, left=2, right=2, min_width=20),
-            blank,
-            urwid.Padding(
-                urwid.AttrWrap(
-                    urwid.Button("Add repository", self.on_repo_add_menu_open), 'buttn', 'buttnf'),
-                left=2, right=2, width=25),
-            blank,
-            urwid.Padding(
-                urwid.AttrWrap(
-                    urwid.Button("Delete repositories", self.on_repo_delete_menu_open), 'buttn', 'buttnf'),
-                left=2, right=2, width=25),
-            blank,
-            # Print result from helm repo add
-            urwid.Padding(self.helm_repo_change_result, left=2, right=2, min_width=20),
+
+            urwid.Columns([
+                urwid.Pile([
+                    # Helm repositories display
+                    equal_divider,
+                    urwid.Padding(
+                        urwid.Text([u"Installed ", ('important', u"Helm repositories:")]), left=2, right=2,
+                        min_width=20),
+                    asterisk_divider,
+                    urwid.Padding(self.helm_repo_installed_repositories_text, left=2, right=2, min_width=20),
+                    blank,
+                    urwid.Padding(
+                        urwid.AttrWrap(
+                            urwid.Button("Add repository", self.on_repo_add_menu_open), 'buttn', 'buttnf'),
+                        left=2, right=2, width=25),
+                    blank,
+                    urwid.Padding(
+                        urwid.AttrWrap(
+                            urwid.Button("Delete repositories", self.on_repo_delete_menu_open), 'buttn', 'buttnf'),
+                        left=2, right=2, width=25),
+                    blank,
+                    # Print result from helm repo add
+                    urwid.Padding(self.helm_repo_change_result, left=2, right=2, min_width=20),
+                    ]),
+                urwid.Pile([
+                    # Helm repositories display
+                    equal_divider,
+                    urwid.Padding(
+                        urwid.Text([u"Available ", ('important', u"Namespaces:")]), left=2, right=2,
+                        min_width=20),
+                    asterisk_divider,
+                    urwid.Padding(self.cluster_namespaces_text, left=2, right=2, min_width=20),
+                    blank,
+                    urwid.Padding(
+                        urwid.AttrWrap(
+                            urwid.Button("Create Namespace", self.on_create_namespace_menu_open), 'buttn', 'buttnf'),
+                        left=2, right=2, width=25),
+                    blank,
+                    urwid.Padding(
+                        urwid.AttrWrap(
+                            urwid.Button("Delete Namespace", self.on_delete_namespace_menu_open), 'buttn', 'buttnf'),
+                        left=2, right=2, width=25),
+                    blank,
+                    # Print result from namespaces change
+                    urwid.Padding(self.namespaces_change_result, left=2, right=2, min_width=20),
+                ])
+            ], 3),
+
+
+
+
         ]
 
         header = urwid.AttrWrap(urwid.Text(text_header), 'header')
@@ -194,6 +234,44 @@ class MainView(urwid.WidgetPlaceholder):
                     self.helm_repo_change_result.set_text(("errors", returned_result['value']))
         self.original_widget = self.frame
 
+    def on_create_namespace_menu_open(self, w):
+        """
+        Execute once 'Create Namespace' button pressed,
+        init the 'CreateNamespaceMenu' class, and perform an overlay to that class
+
+        :param w:
+        :return:
+        """
+        create_namespace_menu = CreateNamespaceMenu(self.on_namespace_menu_closed)
+        self.original_widget = urwid.Overlay(create_namespace_menu.main_window, self.original_widget,
+                                             align='center', width=120, valign='middle', height=30)
+
+    def on_delete_namespace_menu_open(self, w):
+        """
+        Execute once 'Delete Namespace' button pressed,
+        init the 'DeleteReposMenu' class, and perform an overlay to that class
+
+        :param w:
+        :return:
+        """
+        delete_namespace_menu = DeleteNamespacesMenu(self.on_namespace_menu_closed, parse_cluster_namespaces_output(identify_cluster_namespaces()['value']))
+        self.original_widget = urwid.Overlay(delete_namespace_menu.main_window, self.original_widget,
+                                             align='center', width=120, valign='middle', height=30)
+
+    def on_namespace_menu_closed(self, refresh_namespaces=False, returned_result=None):
+        if refresh_namespaces:
+            # Reset the namespaces text area
+            self.cluster_namespaces_text.set_text(
+                identify_cluster_namespaces()['value'].replace("\t", "    ")
+            )
+            if returned_result is not None and 'status' in returned_result:
+                # In case there where no errors print nothing
+                if returned_result['status'] == 0:
+                    self.namespaces_change_result.set_text(u"")
+                else:
+                    self.namespaces_change_result.set_text(("errors", returned_result['value']))
+        self.original_widget = self.frame
+
 
 class HelmInstaller:
 
@@ -239,6 +317,7 @@ def main():
     if args['use_context'] is not None:
         cluster_context = args['use_context']
 
+    global supported_helm_deployments
     supported_charts_file = args['supported_charts_file']
     if supported_charts_file is not None:
         charts_yaml = {}
@@ -252,20 +331,24 @@ def main():
                     print("Input file is not valid: {0}".format(exc))
                     exit(1)
 
-                if is_valid_charts_yaml(charts_yaml):
-                    global supported_helm_deployments, values_dir_path
-                    supported_helm_deployments = charts_yaml
-                    values_dir_path = os.path.dirname(supported_charts_file) + "/"
-                else:
-                    raise ValueError("Input file is not valid: \n{0}".format(yaml.dump(charts_yaml)))
+                global values_dir_path
+                supported_helm_deployments = charts_yaml
+                values_dir_path = os.path.dirname(supported_charts_file) + "/"
+
             else:
                 raise ValueError("File extension is not known to this app: {0}".format(file_extension))
+
+    # Test default supported_helm_deployments
+    if is_valid_charts_yaml(supported_helm_deployments):
+        pass
+    else:
+        raise ValueError("Chart input are not valid: \n{0}".format(supported_helm_deployments))
 
     print("Starting application, please wait...")
     init_checks(config_file, cluster_context, args['helm_init'])
 
-    helm_installer = HelmInstaller()
-    helm_installer.main()
+    #helm_installer = HelmInstaller()
+    #helm_installer.main()
 
 
 if __name__ == '__main__':
