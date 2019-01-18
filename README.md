@@ -66,17 +66,26 @@ file structure **must** be as:
   name_space: ingress-traefik
   values_file: ingress-traefik.values.local.yml
   private_image: False
+  # extra_executes:
+  #   - kubectl add something
+  #   - some command with flags
+  extra_executes: []
 
 - chart_name: chart_name_to_install
   helm_repo_name: my_private_repo/some-chart
   name_space: kube-system
   values_file: kubernetes-dashboard.values.local.yml
   private_image: False
+  # extra_executes:
+  #   - kubectl add something
+  #   - some command with flags
+  extra_executes: []
 
 ...
 ```
 `values_file` file **must** be present in the same directory,  
-all keys **must** be strings, and `private_image` **must** be boolean
+all keys **must** be strings, `private_image` **must** be boolean 
+, and `extra_executes` **must** be list
 
 Access Kubernetes Dashboard
 ---------------------------
