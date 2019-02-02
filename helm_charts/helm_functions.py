@@ -33,7 +33,9 @@ supported_helm_deployments = [
      'name_space': 'jenkins',
      'values_file': 'jenkins.values.local.yml',
      'private_image': False,
-     'extra_executes': []},
+     'extra_executes': [
+         'kubectl apply -f jenkins.configmap.yml --namespace jenkins',
+     ]},
 
     {'chart_name': 'openfaas',
      'helm_repo_name': 'openfaas/openfaas',
@@ -44,6 +46,13 @@ supported_helm_deployments = [
          '',
      ]
      },
+
+    {'chart_name': 'mysql',
+     'helm_repo_name': 'stable/mysql',
+     'name_space': 'mysql',
+     'values_file': 'mysql.values.local.yml',
+     'private_image': False,
+     'extra_executes': []},
 
     {'chart_name': 'rabbitmq',
      'helm_repo_name': 'stable/rabbitmq',

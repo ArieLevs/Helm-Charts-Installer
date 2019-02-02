@@ -159,7 +159,7 @@ Agent:
   # jenkins-agent: v1
 
 Persistence:
-  Enabled: false
+  Enabled: true
   ## A manually managed Persistent Volume and Claim
   ## Requires Persistence.Enabled: true
   ## If defined, PVC must be created manually before volume will be bound
@@ -177,14 +177,14 @@ Persistence:
   Annotations: {}
   AccessMode: ReadWriteOnce
   Size: 8Gi
-  volumes: {}
-  #  - name: config-as-code
-  #    configMap:
-  #      name: jenkins-configuration-as-code
-  mounts: {}
-  #  - name: config-as-code
-  #    mountPath: /var/jenkins_home/casc_configs
-  #    readOnly: true
+  volumes:
+   - name: config-as-code
+     configMap:
+       name: jenkins-configuration-as-code
+  mounts:
+   - name: config-as-code
+     mountPath: /var/jenkins_home/casc_configs
+     readOnly: true
 
 NetworkPolicy:
   # Enable creation of NetworkPolicy resources.

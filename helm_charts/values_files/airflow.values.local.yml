@@ -215,7 +215,7 @@ ingress:
     ##            }
     ## ==== IF YOU HAVE FLOWER > JANUARY 2018, NO MORE NEED TO STRIP THE PREFIX ====================
     annotations:
-      traefik.frontend.rule.type: PathPrefix       ## Flower >= Jan 2018
+      traefik.frontend.rule.type: PathPrefix
       # traefik.frontend.rule.type: PathPrefixStrip  ## Flower < Jan 2018
       kubernetes.io/ingress.class: traefik
     tls:

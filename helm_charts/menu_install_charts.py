@@ -1,5 +1,6 @@
 
 import urwid
+from os import chdir
 from subprocess import run, PIPE, CalledProcessError
 
 
@@ -151,6 +152,7 @@ class InstallChartsMenu:
                     # If array is not None or empty
                     if execution:
                         try:
+                            chdir(self.values_dir_path)
                             completed_process_object = run(execution.split(),
                                                            stdout=PIPE,
                                                            stderr=PIPE)

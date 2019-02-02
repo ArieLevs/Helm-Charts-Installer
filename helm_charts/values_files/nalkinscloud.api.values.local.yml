@@ -13,7 +13,7 @@ deployment:
     environment: dev
     version: null
     backend_domain: https://api.nalkinscloud.localhost
-    frontend_domain: https://alpha.localhost
+    frontend_domain: https://nalkinscloud.localhost
     graylog_host:
     graylog_port:
     email_host:
