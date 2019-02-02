@@ -27,7 +27,7 @@ from helm_charts.menu_delete_namespace import DeleteNamespacesMenu
 # from menu_delete_namespace import DeleteNamespacesMenu
 
 config_file = str(Path.home()) + "/.kube/config"
-cluster_context = "docker-for-desktop"
+cluster_context = "docker-desktop"
 
 
 class MainView(urwid.WidgetPlaceholder):
