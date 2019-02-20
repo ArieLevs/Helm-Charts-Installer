@@ -1,0 +1,5 @@
+
+# Installing dependant packages at setup.py
+urwid
+pyyaml
+argparse
