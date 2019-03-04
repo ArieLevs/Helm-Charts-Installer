@@ -28,6 +28,7 @@ from helm_charts.menu_delete_namespace import DeleteNamespacesMenu
 
 config_file = str(Path.home()) + "/.kube/config"
 cluster_context = "docker-desktop"
+valid_charts_file_extension = ['.yaml', '.yml']
 
 
 class MainView(urwid.WidgetPlaceholder):
@@ -89,7 +90,6 @@ class MainView(urwid.WidgetPlaceholder):
             # Print results of charts installations
             urwid.Padding(self.text_helm_charts_installation_result, left=2, right=2, min_width=20),
 
-
             urwid.Columns([
                 urwid.Pile([
                     # Helm repositories display
@@ -136,10 +136,6 @@ class MainView(urwid.WidgetPlaceholder):
                     urwid.Padding(self.namespaces_change_result, left=2, right=2, min_width=20),
                 ])
             ], 3),
-
-
-
-
         ]
 
         header = urwid.AttrWrap(urwid.Text(text_header), 'header')
@@ -324,7 +320,7 @@ def main():
         with open(supported_charts_file, 'r') as stream:
             filename, file_extension = os.path.splitext(supported_charts_file)
 
-            if file_extension == '.yaml' or file_extension == '.yml':
+            if file_extension in valid_charts_file_extension:
                 try:
                     charts_yaml = yaml.load(stream)
                 except yaml.YAMLError as exc:
@@ -336,7 +332,8 @@ def main():
                 values_dir_path = os.path.dirname(supported_charts_file) + "/"
 
             else:
-                raise ValueError("File extension is not known to this app: {0}".format(file_extension))
+                raise ValueError("File extension is not known to this app: {0}, "
+                                 "Valid extensions are: {1}".format(file_extension, valid_charts_file_extension))
 
     # Test default supported_helm_deployments
     if is_valid_charts_yaml(supported_helm_deployments):
