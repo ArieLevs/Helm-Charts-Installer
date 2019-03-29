@@ -68,13 +68,6 @@ supported_helm_deployments = [
      'private_image': False,
      'extra_executes': []},
 
-    {'chart_name': 'nalkinscloud-nginx',
-     'helm_repo_name': 'nalkinscloud/nalkinscloud-nginx',
-     'name_space': 'nalkinscloud-nginx',
-     'values_file': 'nalkinscloud-nginx.values.local.yml',
-     'private_image': False,
-     'extra_executes': []},
-
     {'chart_name': 'nalkinscloud-frontend',
      'helm_repo_name': 'nalkinscloud/nalkinscloud',
      'name_space': 'nalkinscloud-frontend',
