@@ -1,86 +1,118 @@
-
 import os
 from subprocess import run, PIPE
-
 
 values_dir_path = os.path.dirname(os.path.realpath(__file__)) + '/values_files/'
 
 supported_helm_deployments = [
-    {'chart_name': 'airflow',
-     'helm_repo_name': 'stable/airflow',
-     'name_space': 'airflow',
-     'values_file': 'airflow.values.local.yml',
-     'private_image': False,
-     'extra_executes': []
-     },
-
-    {'chart_name': 'ingress-traefik',
-     'helm_repo_name': 'stable/traefik',
-     'name_space': 'ingress-traefik',
-     'values_file': 'ingress-traefik.values.local.yml',
-     'private_image': False,
-     'extra_executes': []},
-
-    {'chart_name': 'kubernetes-dashboard',
-     'helm_repo_name': 'stable/kubernetes-dashboard',
-     'name_space': 'kube-system',
-     'values_file': 'kubernetes-dashboard.values.local.yml',
-     'private_image': False,
-     'extra_executes': []},
-
-    {'chart_name': 'jenkins',
-     'helm_repo_name': 'stable/jenkins',
-     'name_space': 'jenkins',
-     'values_file': 'jenkins.values.local.yml',
-     'private_image': False,
-     'extra_executes': [
-         'kubectl apply -f jenkins.configmap.yml --namespace jenkins',
-     ]},
-
-    {'chart_name': 'openfaas',
-     'helm_repo_name': 'openfaas/openfaas',
-     'name_space': 'openfaas',
-     'values_file': 'openfaas.values.local.yml',
-     'private_image': False,
-     'extra_executes': [
-         '',
-     ]
-     },
-
-    {'chart_name': 'mysql',
-     'helm_repo_name': 'stable/mysql',
-     'name_space': 'mysql',
-     'values_file': 'mysql.values.local.yml',
-     'private_image': False,
-     'extra_executes': []},
-
-    {'chart_name': 'rabbitmq',
-     'helm_repo_name': 'stable/rabbitmq',
-     'name_space': 'rabbitmq',
-     'values_file': 'rabbitmq.values.local.yml',
-     'private_image': False,
-     'extra_executes': []},
-
-    {'chart_name': 'redis',
-     'helm_repo_name': 'stable/redis',
-     'name_space': 'redis',
-     'values_file': 'redis.values.local.yml',
-     'private_image': False,
-     'extra_executes': []},
-
-    {'chart_name': 'nalkinscloud-frontend',
-     'helm_repo_name': 'nalkinscloud/nalkinscloud',
-     'name_space': 'nalkinscloud-frontend',
-     'values_file': 'nalkinscloud.frontend.values.local.yml',
-     'private_image': True,
-     'extra_executes': []},
-
-    {'chart_name': 'nalkinscloud-api',
-     'helm_repo_name': 'nalkinscloud/nalkinscloud',
-     'name_space': 'nalkinscloud-api',
-     'values_file': 'nalkinscloud.api.values.local.yml',
-     'private_image': True,
-     'extra_executes': []},
+    {
+        'chart_name': 'airflow',
+        'chart_version': '2.8.1',
+        'helm_repo_name': 'stable/airflow',
+        'name_space': 'airflow',
+        'values_file': 'airflow.values.local.yml',
+        'private_image': False,
+        'extra_executes': []
+    },
+    {
+        'chart_name': 'ingress-traefik',
+        'helm_repo_name': 'stable/traefik',
+        'chart_version': '1.68.2',
+        'name_space': 'kube-system',
+        'values_file': 'ingress-traefik.values.local.yml',
+        'private_image': False,
+        'extra_executes': []
+    },
+    {
+        'chart_name': 'kubernetes-dashboard',
+        'chart_version': '1.5.1',
+        'helm_repo_name': 'stable/kubernetes-dashboard',
+        'name_space': 'kube-system',
+        'values_file': 'kubernetes-dashboard.values.local.yml',
+        'private_image': False,
+        'extra_executes': []
+    },
+    {
+        'chart_name': 'jenkins',
+        'chart_version': '1.1.16',
+        'helm_repo_name': 'stable/jenkins',
+        'name_space': 'jenkins',
+        'values_file': 'jenkins.values.local.yml',
+        'private_image': False,
+        'extra_executes': [
+            'kubectl apply -f jenkins.configmap.yml --namespace jenkins',
+        ]
+    },
+    {
+        'chart_name': 'openfaas',
+        'helm_repo_name': 'openfaas/openfaas',
+        'name_space': 'openfaas',
+        'values_file': 'openfaas.values.local.yml',
+        'private_image': False,
+        'extra_executes': [
+            '',
+        ]
+    },
+    {
+        'chart_name': 'mysql',
+        'chart_version': '0.19.2',
+        'helm_repo_name': 'stable/mysql',
+        'name_space': 'mysql',
+        'values_file': 'mysql.values.local.yml',
+        'private_image': False,
+        'extra_executes': []
+    },
+    {
+        'chart_name': 'rabbitmq',
+        'chart_version': '5.5.1',
+        'helm_repo_name': 'stable/rabbitmq',
+        'name_space': 'rabbitmq',
+        'values_file': 'rabbitmq.values.local.yml',
+        'private_image': False,
+        'extra_executes': []
+    },
+    {
+        'chart_name': 'redis',
+        'chart_version': '7.1.0',
+        'helm_repo_name': 'stable/redis',
+        'name_space': 'redis',
+        'values_file': 'redis.values.local.yml',
+        'private_image': False,
+        'extra_executes': []
+    },
+    {
+        'chart_name': 'nalkinscloud-frontend',
+        'helm_repo_name': 'nalkinscloud/nalkinscloud',
+        'name_space': 'nalkinscloud-frontend',
+        'values_file': 'nalkinscloud.frontend.values.local.yml',
+        'private_image': True,
+        'extra_executes': []
+    },
+    {
+        'chart_name': 'nalkinscloud-api',
+        'helm_repo_name': 'nalkinscloud/nalkinscloud',
+        'name_space': 'nalkinscloud-api',
+        'values_file': 'nalkinscloud.api.values.local.yml',
+        'private_image': True,
+        'extra_executes': []
+    },
+    {
+        'chart_name': 'nalkinscloud-mysql',
+        'chart_version': '0.19.2',
+        'helm_repo_name': 'stable/mysql',
+        'name_space': 'mysql',
+        'values_file': 'nalkinscloud.mysql.values.local.yml',
+        'private_image': False,
+        'extra_executes': []
+    },
+    {
+        'chart_name': 'artifactory',
+        'helm_repo_name': 'jfrog/artifactory',
+        'chart_version': '7.14.0',
+        'name_space': 'artifactory',
+        'values_file': 'artifactory.values.local.yml',
+        'private_image': False,
+        'extra_executes': []
+    },
 ]
 
 

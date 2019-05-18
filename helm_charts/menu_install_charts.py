@@ -120,6 +120,7 @@ class InstallChartsMenu:
         charts_list_dict is a list of dicts as:
         [
             {'chart_name': 'ingress-traefik',
+            'chart_version': '1.2.3',
             'helm_repo_name': 'stable/traefik',
             'name_space': 'ingress-traefik',
             'values_file': 'ingress-traefik.values.local.yml',
@@ -170,6 +171,7 @@ class InstallChartsMenu:
             # then install helm chart with setting the docker-registry secret values
             if deployment['private_image']:
                 completed_process_object = run(["helm", "upgrade", deployment['chart_name'],
+                                                "--version", deployment['chart_version'],
                                                 "--install", deployment['helm_repo_name'],
                                                 "--namespace", deployment['name_space'],
                                                 "-f", self.values_dir_path + deployment['values_file'],
@@ -180,6 +182,7 @@ class InstallChartsMenu:
                                                stderr=PIPE)
             else:
                 completed_process_object = run(["helm", "upgrade", deployment['chart_name'],
+                                                "--version", deployment['chart_version'],
                                                 "--install", deployment['helm_repo_name'],
                                                 "--namespace", deployment['name_space'],
                                                 "-f", self.values_dir_path + deployment['values_file']],

@@ -18,6 +18,17 @@ deployment:
     graylog_port:
     email_host:
     email_port:
+    static_url: https://arielevs.github.io/
+
+dependantServices:
+  - name: init-database
+    image: busybox
+    command: ['sh', '-c', 'env; until nc -z ${db_host} ${db_port} ; do echo waiting for database; sleep 2; done;']
+    env:
+      - name: db_host
+        value: "mysql.mysql.svc.cluster.local"
+      - name: db_port
+        value: "3306"
 
 secrets:
   # If blank, random 50 char secret created
@@ -25,21 +36,26 @@ secrets:
 
   docker:
     dockerSecretName: nalkinscloud-nexus-docker
-    registry: none
-    username: none
-    password: none
+    registry: url
+    username: admin
+    password: admin
   database:
     username: django
     password: django
   email:
-    username: none
-    password: none
+    username: admin
+    password: admin
+  google:
+    client_id: google_client_id
+    client_secret: google_client_secret
+  github:
+    client_id: github_client_id
+    client_secret: github_client_secret
 
 configmap:
   databaseVars:
     # Key also used as env name inside project
     db_name: django
-    db_user: django
     db_host: centraldb.nalkins.cloud
 
 service:
