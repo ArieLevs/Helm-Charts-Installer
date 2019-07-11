@@ -63,7 +63,7 @@ supported_helm_deployments = [
     },
     {
         'chart_name': 'rabbitmq',
-        'chart_version': '5.5.1',
+        'chart_version': '6.1.4',
         'helm_repo_name': 'stable/rabbitmq',
         'name_space': 'rabbitmq',
         'values_file': 'rabbitmq.values.local.yml',
